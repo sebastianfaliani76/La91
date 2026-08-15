@@ -296,7 +296,19 @@
 .tienda__carrusel-indicadores span { width: 19px; height: 4px; border-radius: 2px; background: rgb(255 255 255 / 40%); }
 .tienda__carrusel-indicadores span.activo { width: 32px; background: var(--color-blanco); }
 @keyframes entrada-oferta { from { opacity: .3; transform: translateX(55px); } to { opacity: 1; transform: translateX(0); } }
-.tienda__foto { position: relative; }
+.tienda__foto {
+  position: relative;
+  flex: 0 0 145px;
+  height: 145px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+.tienda__productos article > small {
+  position: relative;
+  z-index: 1;
+  display: block;
+  min-height: 18px;
+}
 .tienda__foto .tienda__descuento-producto {
   position: absolute;
   z-index: 2;
@@ -334,11 +346,11 @@
   z-index: 4;
   top: 50%;
   left: 50%;
-  width: 135%;
+  width: 120%;
   padding: 9px 0;
   color: var(--color-blanco);
-  background: rgb(73 84 87 / 88%);
-  box-shadow: 0 2px 7px rgb(0 0 0 / 22%);
+  background: rgb(145 157 160 / 90%);
+  box-shadow: 0 2px 6px rgb(0 0 0 / 14%);
   font-size: .86rem;
   font-weight: 700;
   letter-spacing: .13em;
@@ -386,6 +398,7 @@
 }
 .tienda__cuerpo aside button > span:last-child { line-height: 1.2; }
 @media (max-width: 700px) {
+  .tienda__foto { flex-basis: 110px; height: 110px; }
   .tienda__cuerpo aside button { flex: 0 0 112px; flex-direction: column; justify-content: center; gap: 5px; text-align: center; }
   .tienda__cuerpo aside button > img,
   .tienda__icono-categoria-vacio { width: 40px; height: 40px; }
