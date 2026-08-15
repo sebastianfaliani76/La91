@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Modal } from './componentes/Modal.jsx';
+import { Paginacion } from './componentes/Paginacion.jsx';
 import {
   fechaCivilVencida,
   fechaParaInput,
@@ -159,7 +160,7 @@ export function Proveedores({ token, permisos }) {
   const [cuentasTesoreria, setCuentasTesoreria] = useState([]);
   const [medioPago, setMedioPago] = useState('transferencia');
   const [origenEfectivo, setOrigenEfectivo] = useState('tesoreria');
-  const limite = 25;
+  const [limite, setLimite] = useState(25);
   const cargar = useCallback(async () => {
     try {
       const parametros = new URLSearchParams({
@@ -178,7 +179,7 @@ export function Proveedores({ token, permisos }) {
     } catch (error) {
       setMensaje(error.message);
     }
-  }, [token, pagina, buscar, estado, filtroCuenta]);
+  }, [token, pagina, limite, buscar, estado, filtroCuenta]);
   useEffect(() => {
     cargar();
   }, [cargar]);
@@ -386,6 +387,18 @@ export function Proveedores({ token, permisos }) {
             Página {pagina} de {paginas}
           </span>
         </div>
+        <div className="paginacion--superior">
+          <Paginacion
+            pagina={pagina}
+            paginas={paginas}
+            limite={limite}
+            alCambiarPagina={setPagina}
+            alCambiarLimite={(v) => {
+              setLimite(v);
+              setPagina(1);
+            }}
+          />
+        </div>
         {proveedores.length ? (
           <div className="tabla-contenedor">
             <table>
@@ -424,8 +437,28 @@ export function Proveedores({ token, permisos }) {
                     >
                       {moneda(proveedor.saldo)}
                     </td>
-                    <td className={Number(proveedor.compras_sin_factura) > 0 ? 'pendiente-facturacion' : ''}>
-                      {Number(proveedor.compras_sin_factura) > 0 ? <>{moneda(proveedor.importe_sin_factura)}<small className="dato-secundario">{Number(proveedor.compras_sin_factura).toLocaleString('es-AR')} {Number(proveedor.compras_sin_factura) === 1 ? 'compra' : 'compras'}</small></> : '—'}
+                    <td
+                      className={
+                        Number(proveedor.compras_sin_factura) > 0
+                          ? 'pendiente-facturacion'
+                          : ''
+                      }
+                    >
+                      {Number(proveedor.compras_sin_factura) > 0 ? (
+                        <>
+                          {moneda(proveedor.importe_sin_factura)}
+                          <small className="dato-secundario">
+                            {Number(
+                              proveedor.compras_sin_factura,
+                            ).toLocaleString('es-AR')}{' '}
+                            {Number(proveedor.compras_sin_factura) === 1
+                              ? 'compra'
+                              : 'compras'}
+                          </small>
+                        </>
+                      ) : (
+                        '—'
+                      )}
                     </td>
                     <td>
                       <span
@@ -470,6 +503,17 @@ export function Proveedores({ token, permisos }) {
           <p className="vacio">No hay proveedores para mostrar.</p>
         )}
         <div className="paginacion">
+          <Paginacion
+            pagina={pagina}
+            paginas={paginas}
+            limite={limite}
+            alCambiarPagina={setPagina}
+            alCambiarLimite={(v) => {
+              setLimite(v);
+              setPagina(1);
+            }}
+          />
+          {/*
           <button
             disabled={pagina === 1}
             onClick={() => setPagina((v) => v - 1)}
@@ -482,6 +526,7 @@ export function Proveedores({ token, permisos }) {
           >
             Siguiente
           </button>
+          */}
         </div>
       </article>
       <Modal
@@ -535,11 +580,46 @@ export function Proveedores({ token, permisos }) {
             {cuenta.ordenes.length ? (
               <div className="tabla-contenedor tabla-cuenta">
                 <table>
-                  <thead><tr><th>Compra</th><th>Recepción</th><th>Productos</th><th>Total</th><th></th></tr></thead>
-                  <tbody>{cuenta.ordenes.map((orden) => <tr key={orden.id}><td>#{orden.id}</td><td>{orden.fecha_recepcion ? formatearFechaHora(orden.fecha_recepcion) : formatearFecha(orden.fecha_esperada)}</td><td>{orden.productos}</td><td>{moneda(orden.total)}</td><td>{gestionarCuenta&&<button className="boton-tabla" onClick={()=>abrirFactura(orden)}>Registrar factura</button>}</td></tr>)}</tbody>
+                  <thead>
+                    <tr>
+                      <th>Compra</th>
+                      <th>Recepción</th>
+                      <th>Productos</th>
+                      <th>Total</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {cuenta.ordenes.map((orden) => (
+                      <tr key={orden.id}>
+                        <td>#{orden.id}</td>
+                        <td>
+                          {orden.fecha_recepcion
+                            ? formatearFechaHora(orden.fecha_recepcion)
+                            : formatearFecha(orden.fecha_esperada)}
+                        </td>
+                        <td>{orden.productos}</td>
+                        <td>{moneda(orden.total)}</td>
+                        <td>
+                          {gestionarCuenta && (
+                            <button
+                              className="boton-tabla"
+                              onClick={() => abrirFactura(orden)}
+                            >
+                              Registrar factura
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
                 </table>
               </div>
-            ) : <p className="vacio">No hay compras recibidas pendientes de facturación.</p>}
+            ) : (
+              <p className="vacio">
+                No hay compras recibidas pendientes de facturación.
+              </p>
+            )}
             <h3>Facturas</h3>
             {cuenta.facturas.length ? (
               <div className="tabla-contenedor tabla-cuenta">
@@ -652,12 +732,27 @@ export function Proveedores({ token, permisos }) {
       <Modal
         abierto={factura}
         titulo="Nueva factura de proveedor"
-        alCerrar={() => { setFactura(false); setOrdenFacturaId(''); setTotalFactura(''); }}
+        alCerrar={() => {
+          setFactura(false);
+          setOrdenFacturaId('');
+          setTotalFactura('');
+        }}
       >
         <form className="formulario-modal" onSubmit={guardarFactura}>
           <div>
             <label>Orden de compra relacionada</label>
-            <select name="orden_compra_id" value={ordenFacturaId} onChange={(e) => { const valor=e.target.value; const orden=cuenta?.ordenes.find((item)=>String(item.id)===valor); setOrdenFacturaId(valor); setTotalFactura(orden ? String(Number(orden.total)) : ''); }}>
+            <select
+              name="orden_compra_id"
+              value={ordenFacturaId}
+              onChange={(e) => {
+                const valor = e.target.value;
+                const orden = cuenta?.ordenes.find(
+                  (item) => String(item.id) === valor,
+                );
+                setOrdenFacturaId(valor);
+                setTotalFactura(orden ? String(Number(orden.total)) : '');
+              }}
+            >
               <option value="">Sin orden relacionada</option>
               {cuenta?.ordenes.map((o) => (
                 <option key={o.id} value={o.id}>
@@ -719,7 +814,11 @@ export function Proveedores({ token, permisos }) {
             <button
               type="button"
               className="boton boton--secundario"
-              onClick={() => { setFactura(false); setOrdenFacturaId(''); setTotalFactura(''); }}
+              onClick={() => {
+                setFactura(false);
+                setOrdenFacturaId('');
+                setTotalFactura('');
+              }}
             >
               Cancelar
             </button>

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { CampoClave } from './componentes/CampoClave.jsx';
 import { Modal } from './componentes/Modal.jsx';
+import { Paginacion } from './componentes/Paginacion.jsx';
 
 const dinero = (n) =>
   Number(n || 0).toLocaleString('es-AR', {
@@ -43,6 +44,8 @@ export function Tienda() {
   const [favoritosDetalle, setFavoritosDetalle] = useState([]);
   const [valoraciones, setValoraciones] = useState({});
   const [promocionActiva, setPromocionActiva] = useState(0);
+  const [pagina, setPagina] = useState(1);
+  const [limite, setLimite] = useState(25);
   const apiCliente = (ruta, opciones = {}) =>
     api(`/cliente${ruta}`, {
       ...opciones,
@@ -65,7 +68,7 @@ export function Tienda() {
     const [p, listado, promociones] = await Promise.all([
       api('/publico/configuracion'),
       api(
-        `/publico/productos?buscar=${encodeURIComponent(buscar)}${filtroCategoria}&limite=60`,
+        `/publico/productos?buscar=${encodeURIComponent(buscar)}${filtroCategoria}&pagina=${pagina}&limite=${limite}`,
       ),
       api('/publico/productos?promociones=true&limite=12'),
     ]);
@@ -83,7 +86,7 @@ export function Tienda() {
     return () => clearTimeout(demora);
     // La recarga depende exclusivamente de los filtros visibles.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [buscar, categoria]);
+  }, [buscar, categoria, pagina, limite]);
   useEffect(() => {
     if (!localStorage.getItem(TOKEN)) return;
     cargarPreferencias().catch(() => localStorage.removeItem(TOKEN));
@@ -412,10 +415,7 @@ export function Tienda() {
               ‹
             </button>
           )}
-          <div
-            className="tienda__banner-promocion"
-            key={productoBanner.id}
-          >
+          <div className="tienda__banner-promocion" key={productoBanner.id}>
             <div className="tienda__banner-sello">OFERTA ONLINE</div>
             <div className="tienda__banner-imagen">
               {productoBanner.imagen_url ? (
@@ -496,7 +496,10 @@ export function Tienda() {
           <h2>Categorías</h2>
           <button
             className={!categoria ? 'activo' : ''}
-            onClick={() => setCategoria('')}
+            onClick={() => {
+              setCategoria('');
+              setPagina(1);
+            }}
           >
             <span className="icono-todas" aria-hidden="true">
               ≡
@@ -507,7 +510,10 @@ export function Tienda() {
             <button
               className={String(categoria) === String(c.id) ? 'activo' : ''}
               key={c.id}
-              onClick={() => setCategoria(c.id)}
+              onClick={() => {
+                setCategoria(c.id);
+                setPagina(1);
+              }}
             >
               {c.icono_url ? (
                 <img src={c.icono_url} alt="" />
@@ -524,11 +530,26 @@ export function Tienda() {
           <div className="tienda__busqueda">
             <input
               value={buscar}
-              onChange={(e) => setBuscar(e.target.value)}
+              onChange={(e) => {
+                setBuscar(e.target.value);
+                setPagina(1);
+              }}
               placeholder="Buscar productos…"
               autoFocus
             />
             <span>{total} productos</span>
+          </div>
+          <div className="paginacion--superior">
+            <Paginacion
+              pagina={pagina}
+              paginas={Math.ceil(total / limite)}
+              limite={limite}
+              alCambiarPagina={setPagina}
+              alCambiarLimite={(valor) => {
+                setLimite(valor);
+                setPagina(1);
+              }}
+            />
           </div>
           <div className="tienda__productos">
             {productos.map((p) => (
@@ -578,7 +599,10 @@ export function Tienda() {
                 ) : (
                   <strong>{dinero(p.precio)}</strong>
                 )}
-                <div className="tienda__valoracion" aria-label="Valoración del producto">
+                <div
+                  className="tienda__valoracion"
+                  aria-label="Valoración del producto"
+                >
                   {[1, 2, 3, 4, 5].map((estrella) => (
                     <button
                       type="button"
@@ -614,6 +638,16 @@ export function Tienda() {
             ))}
           </div>
           {!productos.length && <p>No hay productos para esta búsqueda.</p>}
+          <Paginacion
+            pagina={pagina}
+            paginas={Math.ceil(total / limite)}
+            limite={limite}
+            alCambiarPagina={setPagina}
+            alCambiarLimite={(valor) => {
+              setLimite(valor);
+              setPagina(1);
+            }}
+          />
         </main>
       </div>
       {modal === 'carrito' && (

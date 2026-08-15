@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Modal } from './componentes/Modal.jsx';
-import { formatearFecha, formatearFechaHora, formatearHora } from './utilidades/fechas.js';
+import {
+  formatearFecha,
+  formatearFechaHora,
+  formatearHora,
+} from './utilidades/fechas.js';
 import { GestionCajas } from './componentes/GestionCajas.jsx';
+import { Paginacion } from './componentes/Paginacion.jsx';
 
 async function pedir(ruta, token, opciones = {}) {
   const respuesta = await fetch(ruta, {
@@ -80,6 +85,8 @@ export function Ventas({ token, permisos }) {
   const [clientes, setClientes] = useState([]);
   const [clienteId, setClienteId] = useState('');
   const [modalGestionCajas, setModalGestionCajas] = useState(false);
+  const [limiteVentas, setLimiteVentas] = useState(25);
+  const [limiteCajas, setLimiteCajas] = useState(10);
 
   const cargar = useCallback(async () => {
     try {
@@ -96,31 +103,53 @@ export function Ventas({ token, permisos }) {
       setCuentasEfectivo(cuentas.datos);
       setProductos(referencias.datos);
       setClientes(referenciaClientes.datos);
-      if (caja.dato) setResumenCajaActual((await pedir('/api/ventas/caja/resumen', token)).dato);
-      else { setResumenCajaActual(null); setModalCaja(true); }
+      if (caja.dato)
+        setResumenCajaActual(
+          (await pedir('/api/ventas/caja/resumen', token)).dato,
+        );
+      else {
+        setResumenCajaActual(null);
+        setModalCaja(true);
+      }
     } catch (error) {
       setMensaje(error.message);
     }
   }, [token]);
   const actualizarCajasDisponibles = useCallback(async () => {
-    try { setCajasDisponibles((await pedir('/api/ventas/caja/disponibles', token)).datos); }
-    catch (error) { setMensaje(error.message); }
+    try {
+      setCajasDisponibles(
+        (await pedir('/api/ventas/caja/disponibles', token)).datos,
+      );
+    } catch (error) {
+      setMensaje(error.message);
+    }
   }, [token]);
   useEffect(() => {
     cargar();
   }, [cargar]);
   useEffect(() => {
     if (!sesion) return undefined;
-    const actualizarResumen = async () => { try { setResumenCajaActual((await pedir('/api/ventas/caja/resumen', token)).dato); } catch { /* La carga principal mostrará cualquier error persistente. */ } };
+    const actualizarResumen = async () => {
+      try {
+        setResumenCajaActual(
+          (await pedir('/api/ventas/caja/resumen', token)).dato,
+        );
+      } catch {
+        /* La carga principal mostrará cualquier error persistente. */
+      }
+    };
     const intervalo = setInterval(actualizarResumen, 15000);
     window.addEventListener('focus', actualizarResumen);
-    return () => { clearInterval(intervalo); window.removeEventListener('focus', actualizarResumen); };
+    return () => {
+      clearInterval(intervalo);
+      window.removeEventListener('focus', actualizarResumen);
+    };
   }, [sesion, token]);
   const cargarHistorial = useCallback(async () => {
     try {
       const parametros = new URLSearchParams({
         pagina: String(paginaVentas),
-        limite: '25',
+        limite: String(limiteVentas),
       });
       if (buscarVentas) parametros.set('buscar', buscarVentas);
       if (fechaDesde) parametros.set('fecha_desde', fechaDesde);
@@ -138,7 +167,7 @@ export function Ventas({ token, permisos }) {
     } catch (error) {
       setMensaje(error.message);
     }
-  }, [token, paginaVentas, buscarVentas, fechaDesde, fechaHasta]);
+  }, [token, paginaVentas, limiteVentas, buscarVentas, fechaDesde, fechaHasta]);
   useEffect(() => {
     if (vista === 'historial') cargarHistorial();
   }, [vista, cargarHistorial]);
@@ -172,8 +201,25 @@ export function Ventas({ token, permisos }) {
     0,
   );
   useEffect(() => {
-    if (!carrito.length) { setCotizacionVenta(null); return; }
-    const temporizador=setTimeout(()=>pedir('/api/ventas/cotizacion',token,{method:'POST',body:JSON.stringify({detalles:carrito.map((item)=>({producto_id:item.id,cantidad:Number(item.cantidad)}))})}).then((respuesta)=>setCotizacionVenta(respuesta.dato)).catch((error)=>setMensaje(error.message)),120);
+    if (!carrito.length) {
+      setCotizacionVenta(null);
+      return;
+    }
+    const temporizador = setTimeout(
+      () =>
+        pedir('/api/ventas/cotizacion', token, {
+          method: 'POST',
+          body: JSON.stringify({
+            detalles: carrito.map((item) => ({
+              producto_id: item.id,
+              cantidad: Number(item.cantidad),
+            })),
+          }),
+        })
+          .then((respuesta) => setCotizacionVenta(respuesta.dato))
+          .catch((error) => setMensaje(error.message)),
+      120,
+    );
     return () => clearTimeout(temporizador);
   }, [carrito, token]);
   const total = Number(cotizacionVenta?.total ?? subtotalVenta);
@@ -331,7 +377,8 @@ export function Ventas({ token, permisos }) {
             cantidad: Number(item.cantidad),
           })),
           pagos,
-          efectivo_recibido: Number(pagosVenta.efectivo) > 0 ? Number(recibido) : null,
+          efectivo_recibido:
+            Number(pagosVenta.efectivo) > 0 ? Number(recibido) : null,
         }),
       });
       const comprobante = await pedir(
@@ -377,7 +424,9 @@ export function Ventas({ token, permisos }) {
       setResumenCierre(respuesta.dato);
       setMontoContado(String(respuesta.dato.efectivo_esperado));
       setRendirAlCerrar(true);
-      setCuentaRendicion(cuentasEfectivo[0]?.id ? String(cuentasEfectivo[0].id) : '');
+      setCuentaRendicion(
+        cuentasEfectivo[0]?.id ? String(cuentasEfectivo[0].id) : '',
+      );
       setModalCierre(true);
     } catch (error) {
       setMensaje(error.message);
@@ -528,7 +577,9 @@ export function Ventas({ token, permisos }) {
         },
       );
       setVentaCambio(null);
-      setMensaje(`Cambio/devolución #${respuesta.dato.id} registrado correctamente${Number(respuesta.dato.credito_cuenta) > 0 ? `; ${Number(respuesta.dato.credito_cuenta).toLocaleString('es-AR', { style: 'currency', currency: 'ARS' })} redujeron la cuenta corriente` : ''}.`);
+      setMensaje(
+        `Cambio/devolución #${respuesta.dato.id} registrado correctamente${Number(respuesta.dato.credito_cuenta) > 0 ? `; ${Number(respuesta.dato.credito_cuenta).toLocaleString('es-AR', { style: 'currency', currency: 'ARS' })} redujeron la cuenta corriente` : ''}.`,
+      );
       await Promise.all([cargar(), cargarHistorial()]);
     } catch (error) {
       setMensaje(error.message);
@@ -561,18 +612,32 @@ export function Ventas({ token, permisos }) {
   }
   const cargarHistorialCajas = useCallback(async () => {
     try {
-      const parametros = new URLSearchParams({ pagina: String(paginaCajas), limite: '8' });
+      const parametros = new URLSearchParams({
+        pagina: String(paginaCajas),
+        limite: String(limiteCajas),
+      });
       if (fechaDesdeCajas) parametros.set('fecha_desde', fechaDesdeCajas);
       if (fechaHastaCajas) parametros.set('fecha_hasta', fechaHastaCajas);
       if (estadoCajas) parametros.set('estado', estadoCajas);
       if (rendicionCajas) parametros.set('estado_rendicion', rendicionCajas);
-      const respuesta = await pedir(`/api/ventas/caja/historial?${parametros}`, token);
+      const respuesta = await pedir(
+        `/api/ventas/caja/historial?${parametros}`,
+        token,
+      );
       setSesionesCaja(respuesta.datos);
       setTotalSesionesCaja(Number(respuesta.total));
     } catch (error) {
       setMensaje(error.message);
     }
-  }, [token, paginaCajas, fechaDesdeCajas, fechaHastaCajas, estadoCajas, rendicionCajas]);
+  }, [
+    token,
+    paginaCajas,
+    limiteCajas,
+    fechaDesdeCajas,
+    fechaHastaCajas,
+    estadoCajas,
+    rendicionCajas,
+  ]);
 
   useEffect(() => {
     if (!modalHistorialCajas) return undefined;
@@ -588,10 +653,14 @@ export function Ventas({ token, permisos }) {
   async function rendirSesion() {
     setProcesando(true);
     try {
-      const respuesta = await pedir(`/api/ventas/caja/${sesionARendir.id}/rendir`, token, {
-        method: 'POST',
-        body: JSON.stringify({ cuenta_destino_id: Number(cuentaRendicion) }),
-      });
+      const respuesta = await pedir(
+        `/api/ventas/caja/${sesionARendir.id}/rendir`,
+        token,
+        {
+          method: 'POST',
+          body: JSON.stringify({ cuenta_destino_id: Number(cuentaRendicion) }),
+        },
+      );
       setSesionARendir(null);
       setMensaje(`Caja rendida correctamente en ${respuesta.dato.cuenta}.`);
       await cargarHistorialCajas();
@@ -615,10 +684,7 @@ export function Ventas({ token, permisos }) {
           {sesion ? (
             <>
               <span>{sesion.caja}</span>
-              <small>
-                Abierta{' '}
-                {formatearHora(sesion.fecha_apertura)}
-              </small>
+              <small>Abierta {formatearHora(sesion.fecha_apertura)}</small>
               <div className="acciones-caja">
                 {permisos.includes('caja.operar') && (
                   <button
@@ -642,13 +708,62 @@ export function Ventas({ token, permisos }) {
           )}
         </div>
       </div>
-      {sesion && resumenCajaActual && <div className="resumen-caja-vivo" aria-label="Resumen actual de caja">
-        <div><span>Fondo inicial</span><strong>${Number(resumenCajaActual.monto_inicial).toLocaleString('es-AR', { minimumFractionDigits: 2 })}</strong></div>
-        <div><span>Ventas en efectivo</span><strong>${Number(resumenCajaActual.pagos?.efectivo || 0).toLocaleString('es-AR', { minimumFractionDigits: 2 })}</strong></div>
-        <div><span>Otros ingresos</span><strong>${(Number(resumenCajaActual.cobranzas?.efectivo || 0) + Number(resumenCajaActual.ingresos || 0)).toLocaleString('es-AR', { minimumFractionDigits: 2 })}</strong></div>
-        <div><span>Egresos de caja</span><strong>-${(Number(resumenCajaActual.egresos || 0) + Number(resumenCajaActual.pagos_proveedores_efectivo || 0) + Number(resumenCajaActual.pagos_gastos_efectivo || 0) + Number(resumenCajaActual.pagos_sueldos_efectivo || 0) + Number(resumenCajaActual.adelantos_empleados_efectivo || 0)).toLocaleString('es-AR', { minimumFractionDigits: 2 })}</strong></div>
-        <div className="resumen-caja-vivo__destacado"><span>Efectivo esperado</span><strong>${Number(resumenCajaActual.efectivo_esperado).toLocaleString('es-AR', { minimumFractionDigits: 2 })}</strong></div>
-      </div>}
+      {sesion && resumenCajaActual && (
+        <div className="resumen-caja-vivo" aria-label="Resumen actual de caja">
+          <div>
+            <span>Fondo inicial</span>
+            <strong>
+              $
+              {Number(resumenCajaActual.monto_inicial).toLocaleString('es-AR', {
+                minimumFractionDigits: 2,
+              })}
+            </strong>
+          </div>
+          <div>
+            <span>Ventas en efectivo</span>
+            <strong>
+              $
+              {Number(resumenCajaActual.pagos?.efectivo || 0).toLocaleString(
+                'es-AR',
+                { minimumFractionDigits: 2 },
+              )}
+            </strong>
+          </div>
+          <div>
+            <span>Otros ingresos</span>
+            <strong>
+              $
+              {(
+                Number(resumenCajaActual.cobranzas?.efectivo || 0) +
+                Number(resumenCajaActual.ingresos || 0)
+              ).toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+            </strong>
+          </div>
+          <div>
+            <span>Egresos de caja</span>
+            <strong>
+              -$
+              {(
+                Number(resumenCajaActual.egresos || 0) +
+                Number(resumenCajaActual.pagos_proveedores_efectivo || 0) +
+                Number(resumenCajaActual.pagos_gastos_efectivo || 0) +
+                Number(resumenCajaActual.pagos_sueldos_efectivo || 0) +
+                Number(resumenCajaActual.adelantos_empleados_efectivo || 0)
+              ).toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+            </strong>
+          </div>
+          <div className="resumen-caja-vivo__destacado">
+            <span>Efectivo esperado</span>
+            <strong>
+              $
+              {Number(resumenCajaActual.efectivo_esperado).toLocaleString(
+                'es-AR',
+                { minimumFractionDigits: 2 },
+              )}
+            </strong>
+          </div>
+        </div>
+      )}
       <div className="selector-vista">
         <button
           className={vista === 'venta' ? 'activo' : ''}
@@ -666,11 +781,18 @@ export function Ventas({ token, permisos }) {
           <button onClick={abrirHistorialCajas}>Historial de cajas</button>
         )}
         {permisos.includes('caja.supervisar') && (
-          <button onClick={() => setModalGestionCajas(true)}>Administrar cajas</button>
+          <button onClick={() => setModalGestionCajas(true)}>
+            Administrar cajas
+          </button>
         )}
       </div>
       {mensaje && <p className="mensaje">{mensaje}</p>}
-      <GestionCajas abierto={modalGestionCajas} token={token} alCerrar={() => setModalGestionCajas(false)} alActualizar={actualizarCajasDisponibles} />
+      <GestionCajas
+        abierto={modalGestionCajas}
+        token={token}
+        alCerrar={() => setModalGestionCajas(false)}
+        alActualizar={actualizarCajasDisponibles}
+      />
       {vista === 'venta' ? (
         <div className="rejilla-venta">
           <article className="panel buscador-venta">
@@ -757,54 +879,87 @@ export function Ventas({ token, permisos }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {carrito.map((item) => { const promocion=cotizacionVenta?.detalles.find((detalle)=>Number(detalle.producto_id)===Number(item.id)); return (
-                      <tr key={item.id}>
-                        <td>
-                          {item.nombre}
-                          <small className="dato-secundario">
-                            Stock: {Number(item.stock).toLocaleString('es-AR')}
-                          </small>
-                        </td>
-                        <td>
-                          <input
-                            type="number"
-                            min={item.es_pesable ? '0.001' : '1'}
-                            max={item.stock}
-                            step={item.es_pesable ? '0.001' : '1'}
-                            value={item.cantidad}
-                            onFocus={(evento) => evento.currentTarget.select()}
-                            onChange={(evento) =>
-                              cambiarCantidad(item.id, evento.target.value)
-                            }
-                          />
-                        </td>
-                        <td>
-                          {Number(promocion?.descuento_producto)>0&&<del className="precio-anterior">${Number(item.precio_venta).toLocaleString('es-AR',{minimumFractionDigits:2})}</del>}
-                          $ {Number(promocion?.precio_promocional??item.precio_venta).toLocaleString('es-AR', {
-                            minimumFractionDigits: 2,
-                          })}
-                        </td>
-                        <td>
-                          $
-                          {Number(promocion?.subtotal??Number(item.cantidad)*Number(item.precio_venta)).toLocaleString('es-AR', {
-                            minimumFractionDigits: 2,
-                          })}
-                          {Number(promocion?.descuento)>0&&<small className="dato-secundario importe-descuento">Ahorrás ${Number(promocion.descuento).toLocaleString('es-AR',{minimumFractionDigits:2})}</small>}
-                        </td>
-                        <td>
-                          <button
-                            className="boton-tabla"
-                            onClick={() =>
-                              setCarrito((actual) =>
-                                actual.filter((otro) => otro.id !== item.id),
-                              )
-                            }
-                          >
-                            Quitar
-                          </button>
-                        </td>
-                      </tr>
-                    )})}
+                    {carrito.map((item) => {
+                      const promocion = cotizacionVenta?.detalles.find(
+                        (detalle) =>
+                          Number(detalle.producto_id) === Number(item.id),
+                      );
+                      return (
+                        <tr key={item.id}>
+                          <td>
+                            {item.nombre}
+                            <small className="dato-secundario">
+                              Stock:{' '}
+                              {Number(item.stock).toLocaleString('es-AR')}
+                            </small>
+                          </td>
+                          <td>
+                            <input
+                              type="number"
+                              min={item.es_pesable ? '0.001' : '1'}
+                              max={item.stock}
+                              step={item.es_pesable ? '0.001' : '1'}
+                              value={item.cantidad}
+                              onFocus={(evento) =>
+                                evento.currentTarget.select()
+                              }
+                              onChange={(evento) =>
+                                cambiarCantidad(item.id, evento.target.value)
+                              }
+                            />
+                          </td>
+                          <td>
+                            {Number(promocion?.descuento_producto) > 0 && (
+                              <del className="precio-anterior">
+                                $
+                                {Number(item.precio_venta).toLocaleString(
+                                  'es-AR',
+                                  { minimumFractionDigits: 2 },
+                                )}
+                              </del>
+                            )}
+                            ${' '}
+                            {Number(
+                              promocion?.precio_promocional ??
+                                item.precio_venta,
+                            ).toLocaleString('es-AR', {
+                              minimumFractionDigits: 2,
+                            })}
+                          </td>
+                          <td>
+                            $
+                            {Number(
+                              promocion?.subtotal ??
+                                Number(item.cantidad) *
+                                  Number(item.precio_venta),
+                            ).toLocaleString('es-AR', {
+                              minimumFractionDigits: 2,
+                            })}
+                            {Number(promocion?.descuento) > 0 && (
+                              <small className="dato-secundario importe-descuento">
+                                Ahorrás $
+                                {Number(promocion.descuento).toLocaleString(
+                                  'es-AR',
+                                  { minimumFractionDigits: 2 },
+                                )}
+                              </small>
+                            )}
+                          </td>
+                          <td>
+                            <button
+                              className="boton-tabla"
+                              onClick={() =>
+                                setCarrito((actual) =>
+                                  actual.filter((otro) => otro.id !== item.id),
+                                )
+                              }
+                            >
+                              Quitar
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -812,7 +967,13 @@ export function Ventas({ token, permisos }) {
               <p className="vacio">Todavía no agregaste productos.</p>
             )}
             <div className="pie-venta">
-              <span>{Number(cotizacionVenta?.descuento_productos)+Number(cotizacionVenta?.descuento_pedido)>0?`Total · Ahorrás $${(Number(cotizacionVenta.descuento_productos)+Number(cotizacionVenta.descuento_pedido)).toLocaleString('es-AR',{minimumFractionDigits:2})}`:'Total'}</span>
+              <span>
+                {Number(cotizacionVenta?.descuento_productos) +
+                  Number(cotizacionVenta?.descuento_pedido) >
+                0
+                  ? `Total · Ahorrás $${(Number(cotizacionVenta.descuento_productos) + Number(cotizacionVenta.descuento_pedido)).toLocaleString('es-AR', { minimumFractionDigits: 2 })}`
+                  : 'Total'}
+              </span>
               <strong>
                 ${total.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
               </strong>
@@ -904,8 +1065,20 @@ export function Ventas({ token, permisos }) {
               <h3>Operaciones</h3>
               <span>
                 Página {paginaVentas} de{' '}
-                {Math.max(1, Math.ceil(resumenVentas.total / 25))}
+                {Math.max(1, Math.ceil(resumenVentas.total / limiteVentas))}
               </span>
+            </div>
+            <div className="paginacion--superior">
+              <Paginacion
+                pagina={paginaVentas}
+                paginas={Math.ceil(resumenVentas.total / limiteVentas)}
+                limite={limiteVentas}
+                alCambiarPagina={setPaginaVentas}
+                alCambiarLimite={(v) => {
+                  setLimiteVentas(v);
+                  setPaginaVentas(1);
+                }}
+              />
             </div>
             {ventas.length ? (
               <div className="tabla-contenedor">
@@ -926,9 +1099,7 @@ export function Ventas({ token, permisos }) {
                     {ventas.map((venta) => (
                       <tr key={venta.id}>
                         <td>#{venta.id}</td>
-                        <td>
-                          {formatearFechaHora(venta.fecha_creacion)}
-                        </td>
+                        <td>{formatearFechaHora(venta.fecha_creacion)}</td>
                         <td>{venta.caja}</td>
                         <td>{venta.nombre_usuario}</td>
                         <td>{venta.cliente || 'Consumidor final'}</td>
@@ -957,20 +1128,16 @@ export function Ventas({ token, permisos }) {
                 No hay ventas para los filtros seleccionados.
               </p>
             )}
-            <div className="paginacion">
-              <button
-                disabled={paginaVentas === 1}
-                onClick={() => setPaginaVentas((valor) => valor - 1)}
-              >
-                Anterior
-              </button>
-              <button
-                disabled={paginaVentas >= Math.ceil(resumenVentas.total / 25)}
-                onClick={() => setPaginaVentas((valor) => valor + 1)}
-              >
-                Siguiente
-              </button>
-            </div>
+            <Paginacion
+              pagina={paginaVentas}
+              paginas={Math.ceil(resumenVentas.total / limiteVentas)}
+              limite={limiteVentas}
+              alCambiarPagina={setPaginaVentas}
+              alCambiarLimite={(v) => {
+                setLimiteVentas(v);
+                setPaginaVentas(1);
+              }}
+            />
           </article>
         </div>
       )}
@@ -1015,16 +1182,28 @@ export function Ventas({ token, permisos }) {
                 />
               </div>
               <div>
-                <label htmlFor="cuenta_origen_id">Origen del fondo inicial</label>
-                <select id="cuenta_origen_id" name="cuenta_origen_id" required defaultValue="">
-                  <option value="" disabled>Seleccionar cuenta de efectivo</option>
+                <label htmlFor="cuenta_origen_id">
+                  Origen del fondo inicial
+                </label>
+                <select
+                  id="cuenta_origen_id"
+                  name="cuenta_origen_id"
+                  required
+                  defaultValue=""
+                >
+                  <option value="" disabled>
+                    Seleccionar cuenta de efectivo
+                  </option>
                   {cuentasEfectivo.map((cuenta) => (
                     <option key={cuenta.id} value={cuenta.id}>
-                      {cuenta.nombre} · disponible ${Number(cuenta.saldo).toLocaleString('es-AR')}
+                      {cuenta.nombre} · disponible $
+                      {Number(cuenta.saldo).toLocaleString('es-AR')}
                     </option>
                   ))}
                 </select>
-                <small className="dato-secundario">El fondo se descontará automáticamente de Tesorería.</small>
+                <small className="dato-secundario">
+                  El fondo se descontará automáticamente de Tesorería.
+                </small>
               </div>
             </>
           ) : (
@@ -1034,7 +1213,12 @@ export function Ventas({ token, permisos }) {
             </p>
           )}
           <div className="modal__acciones">
-            <button type="button" className="boton boton--secundario" disabled={procesando} onClick={() => setModalCaja(false)}>
+            <button
+              type="button"
+              className="boton boton--secundario"
+              disabled={procesando}
+              onClick={() => setModalCaja(false)}
+            >
               Cancelar
             </button>
             <button
@@ -1062,12 +1246,36 @@ export function Ventas({ token, permisos }) {
           </p>
           <div>
             <label htmlFor="cliente_venta">Cliente</label>
-            <select id="cliente_venta" value={clienteId} onChange={(evento) => setClienteId(evento.target.value)}>
+            <select
+              id="cliente_venta"
+              value={clienteId}
+              onChange={(evento) => setClienteId(evento.target.value)}
+            >
               <option value="">Consumidor final</option>
-              {clientes.map((cliente) => <option key={cliente.id} value={cliente.id}>{cliente.nombre}{cliente.numero_documento ? ` · ${cliente.numero_documento}` : ''}</option>)}
+              {clientes.map((cliente) => (
+                <option key={cliente.id} value={cliente.id}>
+                  {cliente.nombre}
+                  {cliente.numero_documento
+                    ? ` · ${cliente.numero_documento}`
+                    : ''}
+                </option>
+              ))}
             </select>
           </div>
-          {clienteSeleccionado && <div className="resumen-credito-cliente"><span>Saldo actual</span><strong>${Number(clienteSeleccionado.saldo).toLocaleString('es-AR')}</strong><span>Crédito disponible</span><strong>{clienteSeleccionado.credito_habilitado ? `$${Number(clienteSeleccionado.disponible).toLocaleString('es-AR')}` : 'No habilitado'}</strong></div>}
+          {clienteSeleccionado && (
+            <div className="resumen-credito-cliente">
+              <span>Saldo actual</span>
+              <strong>
+                ${Number(clienteSeleccionado.saldo).toLocaleString('es-AR')}
+              </strong>
+              <span>Crédito disponible</span>
+              <strong>
+                {clienteSeleccionado.credito_habilitado
+                  ? `$${Number(clienteSeleccionado.disponible).toLocaleString('es-AR')}`
+                  : 'No habilitado'}
+              </strong>
+            </div>
+          )}
           <div className="medios-pago">
             {[
               ['efectivo', 'Efectivo entregado'],
@@ -1090,12 +1298,22 @@ export function Ventas({ token, permisos }) {
                       if (clave === 'efectivo') {
                         const otrosMedios = Object.entries(pagosVenta)
                           .filter(([medio]) => medio !== 'efectivo')
-                          .reduce((suma, [, importe]) => suma + Number(importe || 0), 0);
-                        const maximoAplicable = Math.max(0, total - otrosMedios);
-                        const efectivoAplicado = Number(valorIngresado) > maximoAplicable
-                          ? maximoAplicable.toFixed(2)
-                          : valorIngresado;
-                        setPagosVenta((actual) => ({ ...actual, efectivo: efectivoAplicado }));
+                          .reduce(
+                            (suma, [, importe]) => suma + Number(importe || 0),
+                            0,
+                          );
+                        const maximoAplicable = Math.max(
+                          0,
+                          total - otrosMedios,
+                        );
+                        const efectivoAplicado =
+                          Number(valorIngresado) > maximoAplicable
+                            ? maximoAplicable.toFixed(2)
+                            : valorIngresado;
+                        setPagosVenta((actual) => ({
+                          ...actual,
+                          efectivo: efectivoAplicado,
+                        }));
                         setRecibido(valorIngresado);
                         return;
                       }
@@ -1137,7 +1355,8 @@ export function Ventas({ token, permisos }) {
             className={`mensaje-error reserva-aviso-cobro ${saldoPago > 0.009 && !creditoValido ? '' : 'reserva-aviso-cobro--oculta'}`}
             aria-hidden={!(saldoPago > 0.009 && !creditoValido)}
           >
-            Seleccioná un cliente con crédito habilitado y límite disponible suficiente.
+            Seleccioná un cliente con crédito habilitado y límite disponible
+            suficiente.
           </p>
           <p
             className={`reserva-vuelto-cobro ${Number(pagosVenta.efectivo) > 0 ? '' : 'reserva-aviso-cobro--oculta'}`}
@@ -1203,7 +1422,11 @@ export function Ventas({ token, permisos }) {
               </strong>
               <span>Cobranzas en efectivo</span>
               <strong>
-                ${Number(resumenCierre.cobranzas?.efectivo || 0).toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+                $
+                {Number(resumenCierre.cobranzas?.efectivo || 0).toLocaleString(
+                  'es-AR',
+                  { minimumFractionDigits: 2 },
+                )}
               </strong>
               <span>Ingresos manuales</span>
               <strong>
@@ -1220,11 +1443,33 @@ export function Ventas({ token, permisos }) {
                 })}
               </strong>
               <span>Pagos a proveedores</span>
-              <strong>-${Number(resumenCierre.pagos_proveedores_efectivo || 0).toLocaleString('es-AR', { minimumFractionDigits: 2 })}</strong>
+              <strong>
+                -$
+                {Number(
+                  resumenCierre.pagos_proveedores_efectivo || 0,
+                ).toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+              </strong>
               <span>Gastos y servicios</span>
-              <strong>-${Number(resumenCierre.pagos_gastos_efectivo || 0).toLocaleString('es-AR', { minimumFractionDigits: 2 })}</strong>
-              <span>Sueldos</span><strong>-${Number(resumenCierre.pagos_sueldos_efectivo || 0).toLocaleString('es-AR', { minimumFractionDigits: 2 })}</strong>
-              <span>Adelantos al personal</span><strong>-${Number(resumenCierre.adelantos_empleados_efectivo || 0).toLocaleString('es-AR', { minimumFractionDigits: 2 })}</strong>
+              <strong>
+                -$
+                {Number(
+                  resumenCierre.pagos_gastos_efectivo || 0,
+                ).toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+              </strong>
+              <span>Sueldos</span>
+              <strong>
+                -$
+                {Number(
+                  resumenCierre.pagos_sueldos_efectivo || 0,
+                ).toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+              </strong>
+              <span>Adelantos al personal</span>
+              <strong>
+                -$
+                {Number(
+                  resumenCierre.adelantos_empleados_efectivo || 0,
+                ).toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+              </strong>
               <span>Débito</span>
               <strong>
                 $
@@ -1291,13 +1536,29 @@ export function Ventas({ token, permisos }) {
             {rendirAlCerrar && (
               <div>
                 <label htmlFor="cuenta_rendicion">Destino del efectivo</label>
-                <select id="cuenta_rendicion" value={cuentaRendicion} onChange={(evento) => setCuentaRendicion(evento.target.value)} required>
-                  <option value="" disabled>Seleccionar cuenta de efectivo</option>
-                  {cuentasEfectivo.map((cuenta) => <option key={cuenta.id} value={cuenta.id}>{cuenta.nombre}</option>)}
+                <select
+                  id="cuenta_rendicion"
+                  value={cuentaRendicion}
+                  onChange={(evento) => setCuentaRendicion(evento.target.value)}
+                  required
+                >
+                  <option value="" disabled>
+                    Seleccionar cuenta de efectivo
+                  </option>
+                  {cuentasEfectivo.map((cuenta) => (
+                    <option key={cuenta.id} value={cuenta.id}>
+                      {cuenta.nombre}
+                    </option>
+                  ))}
                 </select>
               </div>
             )}
-            {!rendirAlCerrar && <p className="dato-secundario">La caja quedará cerrada y pendiente de rendición. Un supervisor podrá rendirla desde el historial.</p>}
+            {!rendirAlCerrar && (
+              <p className="dato-secundario">
+                La caja quedará cerrada y pendiente de rendición. Un supervisor
+                podrá rendirla desde el historial.
+              </p>
+            )}
             <div className="modal__acciones">
               <button
                 className="boton boton--secundario"
@@ -1308,7 +1569,11 @@ export function Ventas({ token, permisos }) {
               </button>
               <button
                 className="boton"
-                disabled={procesando || montoContado === '' || (rendirAlCerrar && !cuentaRendicion)}
+                disabled={
+                  procesando ||
+                  montoContado === '' ||
+                  (rendirAlCerrar && !cuentaRendicion)
+                }
                 onClick={cerrarCaja}
               >
                 {procesando ? 'Cerrando…' : 'Confirmar cierre'}
@@ -1382,26 +1647,75 @@ export function Ventas({ token, permisos }) {
         <div className="barra-filtros filtros-historial-cajas">
           <div>
             <label htmlFor="cajas_desde">Desde</label>
-            <input id="cajas_desde" type="date" value={fechaDesdeCajas} onChange={(evento) => { setFechaDesdeCajas(evento.target.value); setPaginaCajas(1); }} />
+            <input
+              id="cajas_desde"
+              type="date"
+              value={fechaDesdeCajas}
+              onChange={(evento) => {
+                setFechaDesdeCajas(evento.target.value);
+                setPaginaCajas(1);
+              }}
+            />
           </div>
           <div>
             <label htmlFor="cajas_hasta">Hasta</label>
-            <input id="cajas_hasta" type="date" value={fechaHastaCajas} onChange={(evento) => { setFechaHastaCajas(evento.target.value); setPaginaCajas(1); }} />
+            <input
+              id="cajas_hasta"
+              type="date"
+              value={fechaHastaCajas}
+              onChange={(evento) => {
+                setFechaHastaCajas(evento.target.value);
+                setPaginaCajas(1);
+              }}
+            />
           </div>
           <div>
             <label htmlFor="cajas_estado">Caja</label>
-            <select id="cajas_estado" value={estadoCajas} onChange={(evento) => { setEstadoCajas(evento.target.value); setPaginaCajas(1); }}>
-              <option value="">Todas</option><option value="abierta">Abiertas</option><option value="cerrada">Cerradas</option>
+            <select
+              id="cajas_estado"
+              value={estadoCajas}
+              onChange={(evento) => {
+                setEstadoCajas(evento.target.value);
+                setPaginaCajas(1);
+              }}
+            >
+              <option value="">Todas</option>
+              <option value="abierta">Abiertas</option>
+              <option value="cerrada">Cerradas</option>
             </select>
           </div>
           <div>
             <label htmlFor="cajas_rendicion">Rendición</label>
-            <select id="cajas_rendicion" value={rendicionCajas} onChange={(evento) => { setRendicionCajas(evento.target.value); setPaginaCajas(1); }}>
-              <option value="">Todas</option><option value="pendiente">Pendientes</option><option value="rendida">Rendidas</option>
+            <select
+              id="cajas_rendicion"
+              value={rendicionCajas}
+              onChange={(evento) => {
+                setRendicionCajas(evento.target.value);
+                setPaginaCajas(1);
+              }}
+            >
+              <option value="">Todas</option>
+              <option value="pendiente">Pendientes</option>
+              <option value="rendida">Rendidas</option>
             </select>
           </div>
         </div>
-        <p className="filtro-activo">Mostrando {totalSesionesCaja.toLocaleString('es-AR')} sesiones de caja.</p>
+        <p className="filtro-activo">
+          Mostrando {totalSesionesCaja.toLocaleString('es-AR')} sesiones de
+          caja.
+        </p>
+        <div className="paginacion--superior">
+          <Paginacion
+            pagina={paginaCajas}
+            paginas={Math.ceil(totalSesionesCaja / limiteCajas)}
+            limite={limiteCajas}
+            alCambiarPagina={setPaginaCajas}
+            alCambiarLimite={(v) => {
+              setLimiteCajas(v);
+              setPaginaCajas(1);
+            }}
+          />
+        </div>
         <div className="historial-cajas">
           {sesionesCaja.map((item) => {
             const moneda = (valor) =>
@@ -1419,64 +1733,178 @@ export function Ventas({ token, permisos }) {
                     <p>{item.nombre_usuario}</p>
                   </div>
                   <div className="cierre-caja__fechas">
-                    <span>Apertura <strong>{formatearFechaHora(item.fecha_apertura)}</strong></span>
-                    <span>Cierre <strong>{item.fecha_cierre ? formatearFechaHora(item.fecha_cierre) : '—'}</strong></span>
+                    <span>
+                      Apertura{' '}
+                      <strong>{formatearFechaHora(item.fecha_apertura)}</strong>
+                    </span>
+                    <span>
+                      Cierre{' '}
+                      <strong>
+                        {item.fecha_cierre
+                          ? formatearFechaHora(item.fecha_cierre)
+                          : '—'}
+                      </strong>
+                    </span>
                   </div>
-                  <span className={item.estado === 'abierta' ? 'estado-activo' : 'estado-inactivo'}>
+                  <span
+                    className={
+                      item.estado === 'abierta'
+                        ? 'estado-activo'
+                        : 'estado-inactivo'
+                    }
+                  >
                     {item.estado}
                   </span>
                 </header>
                 <div className="cierre-caja__grupos">
                   <section>
                     <h4>Ingresos en efectivo</h4>
-                    <div><span>Fondo inicial</span><strong>{moneda(item.monto_inicial)}</strong></div>
-                    <div><span>Ventas</span><strong>{moneda(item.ventas_efectivo)}</strong></div>
-                    <div><span>Cobranzas</span><strong>{moneda(item.cobranzas_efectivo)}</strong></div>
-                    <div><span>Cambios</span><strong>{moneda(item.cambios_cobros)}</strong></div>
-                    <div><span>Otros ingresos</span><strong>{moneda(item.otros_ingresos)}</strong></div>
-                    <small>Ventas totales por todos los medios: {moneda(item.ventas)}</small>
+                    <div>
+                      <span>Fondo inicial</span>
+                      <strong>{moneda(item.monto_inicial)}</strong>
+                    </div>
+                    <div>
+                      <span>Ventas</span>
+                      <strong>{moneda(item.ventas_efectivo)}</strong>
+                    </div>
+                    <div>
+                      <span>Cobranzas</span>
+                      <strong>{moneda(item.cobranzas_efectivo)}</strong>
+                    </div>
+                    <div>
+                      <span>Cambios</span>
+                      <strong>{moneda(item.cambios_cobros)}</strong>
+                    </div>
+                    <div>
+                      <span>Otros ingresos</span>
+                      <strong>{moneda(item.otros_ingresos)}</strong>
+                    </div>
+                    <small>
+                      Ventas totales por todos los medios: {moneda(item.ventas)}
+                    </small>
                   </section>
                   <section>
                     <h4>Egresos en efectivo</h4>
-                    <div><span>Reintegros</span><strong>-{moneda(item.reintegros)}</strong></div>
-                    <div><span>Operativos</span><strong>-{moneda(item.egresos_operativos)}</strong></div>
-                    <div><span>Otros egresos</span><strong>-{moneda(item.otros_egresos)}</strong></div>
+                    <div>
+                      <span>Reintegros</span>
+                      <strong>-{moneda(item.reintegros)}</strong>
+                    </div>
+                    <div>
+                      <span>Operativos</span>
+                      <strong>-{moneda(item.egresos_operativos)}</strong>
+                    </div>
+                    <div>
+                      <span>Otros egresos</span>
+                      <strong>-{moneda(item.otros_egresos)}</strong>
+                    </div>
                   </section>
                   <section className="cierre-caja__control">
                     <h4>Control del cierre</h4>
-                    <div><span>Efectivo esperado</span><strong>{moneda(item.efectivo_esperado)}</strong></div>
-                    <div><span>Efectivo contado</span><strong>{item.monto_contado_cierre == null ? '—' : moneda(item.monto_contado_cierre)}</strong></div>
-                    <div className={Math.abs(diferencia) > 0.009 ? 'cierre-caja__diferencia cierre-caja__diferencia--alerta' : 'cierre-caja__diferencia'}>
+                    <div>
+                      <span>Efectivo esperado</span>
+                      <strong>{moneda(item.efectivo_esperado)}</strong>
+                    </div>
+                    <div>
+                      <span>Efectivo contado</span>
+                      <strong>
+                        {item.monto_contado_cierre == null
+                          ? '—'
+                          : moneda(item.monto_contado_cierre)}
+                      </strong>
+                    </div>
+                    <div
+                      className={
+                        Math.abs(diferencia) > 0.009
+                          ? 'cierre-caja__diferencia cierre-caja__diferencia--alerta'
+                          : 'cierre-caja__diferencia'
+                      }
+                    >
                       <span>Diferencia</span>
-                      <strong>{item.diferencia_cierre == null ? '—' : moneda(item.diferencia_cierre)}</strong>
+                      <strong>
+                        {item.diferencia_cierre == null
+                          ? '—'
+                          : moneda(item.diferencia_cierre)}
+                      </strong>
                     </div>
                     <div>
                       <span>Rendición</span>
-                      <strong className={item.estado_rendicion === 'pendiente' && item.estado === 'cerrada' ? 'estado-rendicion--pendiente' : item.estado_rendicion === 'rendida' ? 'estado-rendicion--rendida' : ''}>{item.estado === 'abierta' ? '—' : item.estado_rendicion}</strong>
-                    </div>
-                    {item.estado_rendicion === 'rendida' && <small>{moneda(item.monto_rendido)} en {item.cuenta_destino_rendicion} · {formatearFechaHora(item.fecha_rendicion)}</small>}
-                    {item.estado === 'cerrada' && item.estado_rendicion === 'pendiente' && permisos.includes('caja.supervisar') && (
-                      <button
-                        className="boton-tabla cierre-caja__rendir"
-                        onClick={() => {
-                          setCuentaRendicion(cuentasEfectivo[0]?.id ? String(cuentasEfectivo[0].id) : '');
-                          setSesionARendir(item);
-                        }}
+                      <strong
+                        className={
+                          item.estado_rendicion === 'pendiente' &&
+                          item.estado === 'cerrada'
+                            ? 'estado-rendicion--pendiente'
+                            : item.estado_rendicion === 'rendida'
+                              ? 'estado-rendicion--rendida'
+                              : ''
+                        }
                       >
-                        Rendir efectivo
-                      </button>
+                        {item.estado === 'abierta'
+                          ? '—'
+                          : item.estado_rendicion}
+                      </strong>
+                    </div>
+                    {item.estado_rendicion === 'rendida' && (
+                      <small>
+                        {moneda(item.monto_rendido)} en{' '}
+                        {item.cuenta_destino_rendicion} ·{' '}
+                        {formatearFechaHora(item.fecha_rendicion)}
+                      </small>
                     )}
+                    {item.estado === 'cerrada' &&
+                      item.estado_rendicion === 'pendiente' &&
+                      permisos.includes('caja.supervisar') && (
+                        <button
+                          className="boton-tabla cierre-caja__rendir"
+                          onClick={() => {
+                            setCuentaRendicion(
+                              cuentasEfectivo[0]?.id
+                                ? String(cuentasEfectivo[0].id)
+                                : '',
+                            );
+                            setSesionARendir(item);
+                          }}
+                        >
+                          Rendir efectivo
+                        </button>
+                      )}
                   </section>
                 </div>
               </article>
             );
           })}
         </div>
-        {!sesionesCaja.length && <p className="vacio">No hay cajas para los filtros seleccionados.</p>}
+        {!sesionesCaja.length && (
+          <p className="vacio">No hay cajas para los filtros seleccionados.</p>
+        )}
         <div className="paginacion">
-          <button disabled={paginaCajas === 1} onClick={() => setPaginaCajas((pagina) => pagina - 1)}>Anterior</button>
-          <span>Página {paginaCajas} de {Math.max(1, Math.ceil(totalSesionesCaja / 8))}</span>
-          <button disabled={paginaCajas >= Math.ceil(totalSesionesCaja / 8)} onClick={() => setPaginaCajas((pagina) => pagina + 1)}>Siguiente</button>
+          <Paginacion
+            pagina={paginaCajas}
+            paginas={Math.ceil(totalSesionesCaja / limiteCajas)}
+            limite={limiteCajas}
+            alCambiarPagina={setPaginaCajas}
+            alCambiarLimite={(v) => {
+              setLimiteCajas(v);
+              setPaginaCajas(1);
+            }}
+          />
+          {/*
+          <button
+            disabled={paginaCajas === 1}
+            onClick={() => setPaginaCajas((pagina) => pagina - 1)}
+          >
+            Anterior
+          </button>
+          <span>
+            Página {paginaCajas} de{' '}
+            {Math.max(1, Math.ceil(totalSesionesCaja / limiteCajas))}
+          </span>
+          <button
+            disabled={paginaCajas >= Math.ceil(totalSesionesCaja / limiteCajas)}
+            onClick={() => setPaginaCajas((pagina) => pagina + 1)}
+          >
+            Siguiente
+          </button>
+          */}
         </div>
         <div className="modal__acciones">
           <button
@@ -1490,24 +1918,67 @@ export function Ventas({ token, permisos }) {
       <Modal
         abierto={Boolean(sesionARendir)}
         titulo={sesionARendir ? `Rendir ${sesionARendir.caja}` : 'Rendir caja'}
-        alCerrar={() => { if (!procesando) setSesionARendir(null); }}
+        alCerrar={() => {
+          if (!procesando) setSesionARendir(null);
+        }}
       >
         {sesionARendir && (
           <div className="formulario-modal">
-            <p>Se ingresarán <strong>${Number(sesionARendir.monto_contado_cierre).toLocaleString('es-AR', { minimumFractionDigits: 2 })}</strong> en la cuenta seleccionada.</p>
-            {!sesionARendir.cuenta_origen_apertura_id && Number(sesionARendir.monto_inicial) > 0 && (
-              <p className="mensaje">Esta sesión es anterior a la integración. También se registrará el egreso histórico de su fondo inicial de ${Number(sesionARendir.monto_inicial).toLocaleString('es-AR')} para evitar duplicar dinero.</p>
-            )}
+            <p>
+              Se ingresarán{' '}
+              <strong>
+                $
+                {Number(sesionARendir.monto_contado_cierre).toLocaleString(
+                  'es-AR',
+                  { minimumFractionDigits: 2 },
+                )}
+              </strong>{' '}
+              en la cuenta seleccionada.
+            </p>
+            {!sesionARendir.cuenta_origen_apertura_id &&
+              Number(sesionARendir.monto_inicial) > 0 && (
+                <p className="mensaje">
+                  Esta sesión es anterior a la integración. También se
+                  registrará el egreso histórico de su fondo inicial de $
+                  {Number(sesionARendir.monto_inicial).toLocaleString('es-AR')}{' '}
+                  para evitar duplicar dinero.
+                </p>
+              )}
             <div>
-              <label htmlFor="cuenta_rendicion_pendiente">Cuenta de efectivo</label>
-              <select id="cuenta_rendicion_pendiente" value={cuentaRendicion} onChange={(evento) => setCuentaRendicion(evento.target.value)}>
-                <option value="" disabled>Seleccionar cuenta</option>
-                {cuentasEfectivo.map((cuenta) => <option key={cuenta.id} value={cuenta.id}>{cuenta.nombre} · saldo ${Number(cuenta.saldo).toLocaleString('es-AR')}</option>)}
+              <label htmlFor="cuenta_rendicion_pendiente">
+                Cuenta de efectivo
+              </label>
+              <select
+                id="cuenta_rendicion_pendiente"
+                value={cuentaRendicion}
+                onChange={(evento) => setCuentaRendicion(evento.target.value)}
+              >
+                <option value="" disabled>
+                  Seleccionar cuenta
+                </option>
+                {cuentasEfectivo.map((cuenta) => (
+                  <option key={cuenta.id} value={cuenta.id}>
+                    {cuenta.nombre} · saldo $
+                    {Number(cuenta.saldo).toLocaleString('es-AR')}
+                  </option>
+                ))}
               </select>
             </div>
             <div className="modal__acciones">
-              <button className="boton boton--secundario" disabled={procesando} onClick={() => setSesionARendir(null)}>Cancelar</button>
-              <button className="boton" disabled={procesando || !cuentaRendicion} onClick={rendirSesion}>{procesando ? 'Rindiendo…' : 'Confirmar rendición'}</button>
+              <button
+                className="boton boton--secundario"
+                disabled={procesando}
+                onClick={() => setSesionARendir(null)}
+              >
+                Cancelar
+              </button>
+              <button
+                className="boton"
+                disabled={procesando || !cuentaRendicion}
+                onClick={rendirSesion}
+              >
+                {procesando ? 'Rindiendo…' : 'Confirmar rendición'}
+              </button>
             </div>
           </div>
         )}
@@ -1529,9 +2000,7 @@ export function Ventas({ token, permisos }) {
               <strong>Venta #{ventaDetalle.id}</strong>
             </div>
             <div className="detalle-venta-cabecera">
-              <span>
-                {formatearFechaHora(ventaDetalle.fecha_creacion)}
-              </span>
+              <span>{formatearFechaHora(ventaDetalle.fecha_creacion)}</span>
               <span>{ventaDetalle.caja}</span>
               <span>Cajero: {ventaDetalle.nombre_usuario}</span>
               <span>Cliente: {ventaDetalle.cliente || 'Consumidor final'}</span>
@@ -1600,17 +2069,18 @@ export function Ventas({ token, permisos }) {
                   <div key={devolucion.id} className="devolucion-registrada">
                     <p>
                       #{devolucion.id} ·{' '}
-                      {formatearFechaHora(devolucion.fecha_creacion)}{' '}
-                      · {devolucion.motivo} · Diferencia $
+                      {formatearFechaHora(devolucion.fecha_creacion)} ·{' '}
+                      {devolucion.motivo} · Diferencia $
                       {Number(devolucion.diferencia).toLocaleString('es-AR', {
                         minimumFractionDigits: 2,
                       })}
                     </p>
                     {devolucion.detalles.map((detalle) => (
                       <p key={detalle.id}>
-                        {detalle.tipo === 'devuelto' ? 'Devuelto' : 'Reemplazo'}:{' '}
-                        {Number(detalle.cantidad).toLocaleString('es-AR')} ×{' '}
-                        {detalle.nombre} ({detalle.codigo_barra || 'sin código'}) · $
+                        {detalle.tipo === 'devuelto' ? 'Devuelto' : 'Reemplazo'}
+                        : {Number(detalle.cantidad).toLocaleString('es-AR')} ×{' '}
+                        {detalle.nombre} ({detalle.codigo_barra || 'sin código'}
+                        ) · $
                         {Number(detalle.subtotal).toLocaleString('es-AR', {
                           minimumFractionDigits: 2,
                         })}
@@ -1630,8 +2100,33 @@ export function Ventas({ token, permisos }) {
                     })}
                   </span>
                 ))}
-                {Number(ventaDetalle.efectivo_recibido) > 0 && <><span>Efectivo entregado: ${Number(ventaDetalle.efectivo_recibido).toLocaleString('es-AR', { minimumFractionDigits: 2 })}</span><span>Vuelto: ${Number(ventaDetalle.vuelto).toLocaleString('es-AR', { minimumFractionDigits: 2 })}</span></>}
-                {Number(ventaDetalle.saldo_pendiente) > 0 && <span>Cuenta corriente: {Number(ventaDetalle.saldo_pendiente).toLocaleString('es-AR', { style: 'currency', currency: 'ARS' })} · vence {formatearFecha(ventaDetalle.fecha_vencimiento)}</span>}
+                {Number(ventaDetalle.efectivo_recibido) > 0 && (
+                  <>
+                    <span>
+                      Efectivo entregado: $
+                      {Number(ventaDetalle.efectivo_recibido).toLocaleString(
+                        'es-AR',
+                        { minimumFractionDigits: 2 },
+                      )}
+                    </span>
+                    <span>
+                      Vuelto: $
+                      {Number(ventaDetalle.vuelto).toLocaleString('es-AR', {
+                        minimumFractionDigits: 2,
+                      })}
+                    </span>
+                  </>
+                )}
+                {Number(ventaDetalle.saldo_pendiente) > 0 && (
+                  <span>
+                    Cuenta corriente:{' '}
+                    {Number(ventaDetalle.saldo_pendiente).toLocaleString(
+                      'es-AR',
+                      { style: 'currency', currency: 'ARS' },
+                    )}{' '}
+                    · vence {formatearFecha(ventaDetalle.fecha_vencimiento)}
+                  </span>
+                )}
               </div>
               <strong>
                 Total: $

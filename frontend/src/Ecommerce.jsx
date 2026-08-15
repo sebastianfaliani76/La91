@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Modal } from './componentes/Modal.jsx';
 import { ConfiguracionEcommerce } from './componentes/ConfiguracionEcommerce.jsx';
 import { PromocionesEcommerce } from './componentes/PromocionesEcommerce.jsx';
+import { Paginacion } from './componentes/Paginacion.jsx';
 
 const dinero = (n) =>
   Number(n || 0).toLocaleString('es-AR', {
@@ -15,6 +16,7 @@ export function Ecommerce({ token, permisos }) {
     [datos, setDatos] = useState([]),
     [total, setTotal] = useState(0),
     [pagina, setPagina] = useState(1),
+    [limite, setLimite] = useState(25),
     [buscar, setBuscar] = useState(''),
     [filtro, setFiltro] = useState(''),
     [detalle, setDetalle] = useState(null),
@@ -46,8 +48,8 @@ export function Ecommerce({ token, permisos }) {
       if (vista === 'promociones') return;
       const r =
           vista === 'productos'
-            ? `/productos?buscar=${encodeURIComponent(buscar)}&estado=${filtro || 'todos'}&pagina=${pagina}&limite=25`
-            : `/pedidos?buscar=${encodeURIComponent(buscar)}&estado=${filtro}&pagina=${pagina}&limite=25`,
+            ? `/productos?buscar=${encodeURIComponent(buscar)}&estado=${filtro || 'todos'}&pagina=${pagina}&limite=${limite}`
+            : `/pedidos?buscar=${encodeURIComponent(buscar)}&estado=${filtro}&pagina=${pagina}&limite=${limite}`,
         d = await api(r);
       setDatos(d.datos);
       setTotal(d.total);
@@ -61,7 +63,7 @@ export function Ecommerce({ token, permisos }) {
     return () => clearTimeout(t);
     // La recarga depende exclusivamente de los filtros visibles.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [vista, buscar, filtro, pagina]);
+  }, [vista, buscar, filtro, pagina, limite]);
   const ver = async (id) => {
     setDetalle((await api(`/pedidos/${id}`)).dato);
     const r = await fetch('/api/tesoreria/cuentas', {
@@ -259,7 +261,7 @@ export function Ecommerce({ token, permisos }) {
       totalReembolsado -
       (detalle?.estado === 'cancelado' ? 0 : Number(detalle?.total || 0)),
   );
-  const paginas = Math.max(1, Math.ceil(total / 25));
+  const paginas = Math.max(1, Math.ceil(total / limite));
 
   return (
     <section className="ecommerce-admin">
@@ -331,93 +333,114 @@ export function Ecommerce({ token, permisos }) {
         </div>
       )}
       {vista === 'pedidos' && (
-        <div className="tabla-contenedor">
-          <table>
-            <thead>
-              <tr>
-                <th>Pedido</th>
-                <th>Fecha</th>
-                <th>Cliente</th>
-                <th>Entrega</th>
-                <th>Pago</th>
-                <th>Total</th>
-                <th>Estado</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {datos.map((p) => (
-                <tr key={p.id}>
-                  <td>#{p.codigo}</td>
-                  <td>{fecha(p.fecha_creacion)}</td>
-                  <td>{p.nombre_cliente}</td>
-                  <td>{p.modalidad_entrega}</td>
-                  <td>{p.estado_pago}</td>
-                  <td>{dinero(p.total)}</td>
-                  <td>{p.estado}</td>
-                  <td>
-                    <button className="boton-tabla" onClick={() => ver(p.id)}>
-                      Ver
-                    </button>
-                  </td>
+        <>
+          <div className="paginacion--superior">
+            <Paginacion
+              pagina={pagina}
+              paginas={paginas}
+              limite={limite}
+              alCambiarPagina={setPagina}
+              alCambiarLimite={(valor) => {
+                setLimite(valor);
+                setPagina(1);
+              }}
+            />
+          </div>
+          <div className="tabla-contenedor">
+            <table>
+              <thead>
+                <tr>
+                  <th>Pedido</th>
+                  <th>Fecha</th>
+                  <th>Cliente</th>
+                  <th>Entrega</th>
+                  <th>Pago</th>
+                  <th>Total</th>
+                  <th>Estado</th>
+                  <th />
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {datos.map((p) => (
+                  <tr key={p.id}>
+                    <td>#{p.codigo}</td>
+                    <td>{fecha(p.fecha_creacion)}</td>
+                    <td>{p.nombre_cliente}</td>
+                    <td>{p.modalidad_entrega}</td>
+                    <td>{p.estado_pago}</td>
+                    <td>{dinero(p.total)}</td>
+                    <td>{p.estado}</td>
+                    <td>
+                      <button className="boton-tabla" onClick={() => ver(p.id)}>
+                        Ver
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
       {vista === 'productos' && (
-        <div className="tabla-contenedor">
-          <table>
-            <thead>
-              <tr>
-                <th>Producto</th>
-                <th>Categoría</th>
-                <th>Precio</th>
-                <th>Disponible</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {datos.map((p) => (
-                <tr key={p.id}>
-                  <td>{p.nombre}</td>
-                  <td>{p.categoria}</td>
-                  <td>{dinero(p.precio)}</td>
-                  <td>{Number(p.disponible_online)}</td>
-                  <td>
-                    <button
-                      className="boton-tabla"
-                      disabled={!permisos.includes('ecommerce.gestionar')}
-                      onClick={() => publicar(p)}
-                    >
-                      {p.esta_publicado ? 'Ocultar' : 'Publicar'}
-                    </button>
-                  </td>
+        <>
+          <div className="paginacion--superior">
+            <Paginacion
+              pagina={pagina}
+              paginas={paginas}
+              limite={limite}
+              alCambiarPagina={setPagina}
+              alCambiarLimite={(valor) => {
+                setLimite(valor);
+                setPagina(1);
+              }}
+            />
+          </div>
+          <div className="tabla-contenedor">
+            <table>
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th>Categoría</th>
+                  <th>Precio</th>
+                  <th>Disponible</th>
+                  <th />
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {datos.map((p) => (
+                  <tr key={p.id}>
+                    <td>{p.nombre}</td>
+                    <td>{p.categoria}</td>
+                    <td>{dinero(p.precio)}</td>
+                    <td>{Number(p.disponible_online)}</td>
+                    <td>
+                      <button
+                        className="boton-tabla"
+                        disabled={!permisos.includes('ecommerce.gestionar')}
+                        onClick={() => publicar(p)}
+                      >
+                        {p.esta_publicado ? 'Ocultar' : 'Publicar'}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
       {['pedidos', 'productos'].includes(vista) && (
-        <div className="paginacion ecommerce-paginacion">
-          <span>
-            Página {pagina} de {paginas}
-          </span>
-          <button
-            disabled={pagina === 1}
-            onClick={() => setPagina((actual) => actual - 1)}
-          >
-            Anterior
-          </button>
-          <button
-            disabled={pagina >= paginas}
-            onClick={() => setPagina((actual) => actual + 1)}
-          >
-            Siguiente
-          </button>
-        </div>
+        <Paginacion
+          pagina={pagina}
+          paginas={paginas}
+          limite={limite}
+          alCambiarPagina={setPagina}
+          alCambiarLimite={(valor) => {
+            setLimite(valor);
+            setPagina(1);
+          }}
+        />
       )}
       {vista === 'promociones' && <PromocionesEcommerce token={token} />}
       {vista === 'configuracion' && config && (
@@ -544,11 +567,15 @@ export function Ecommerce({ token, permisos }) {
                   <tbody>
                     {detalle.pagos.map((pago) => (
                       <tr key={`pago-${pago.id}`}>
-                        <td>{fecha(pago.fecha_aprobacion || pago.fecha_creacion)}</td>
+                        <td>
+                          {fecha(pago.fecha_aprobacion || pago.fecha_creacion)}
+                        </td>
                         <td>Pago · {pago.proveedor}</td>
                         <td>—</td>
                         <td>{pago.referencia_externa || '—'}</td>
-                        <td className="importe-ingreso">+{dinero(pago.monto_bruto)}</td>
+                        <td className="importe-ingreso">
+                          +{dinero(pago.monto_bruto)}
+                        </td>
                       </tr>
                     ))}
                     {(detalle.reembolsos || []).map((item) => (
@@ -557,16 +584,25 @@ export function Ecommerce({ token, permisos }) {
                         <td>Reembolso · {item.motivo}</td>
                         <td>{item.cuenta_tesoreria || '—'}</td>
                         <td>{item.referencia_externa || '—'}</td>
-                        <td className="importe-egreso">-{dinero(item.monto)}</td>
+                        <td className="importe-egreso">
+                          -{dinero(item.monto)}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
               <div className="resumen-pedido-admin">
-                <span>Pagado <strong>{dinero(totalPagado)}</strong></span>
-                <span>Reembolsado <strong>{dinero(totalReembolsado)}</strong></span>
-                <span>Pendiente de reintegro <strong>{dinero(saldoReembolsable)}</strong></span>
+                <span>
+                  Pagado <strong>{dinero(totalPagado)}</strong>
+                </span>
+                <span>
+                  Reembolsado <strong>{dinero(totalReembolsado)}</strong>
+                </span>
+                <span>
+                  Pendiente de reintegro{' '}
+                  <strong>{dinero(saldoReembolsable)}</strong>
+                </span>
               </div>
             </>
           )}
@@ -576,14 +612,17 @@ export function Ecommerce({ token, permisos }) {
               {detalle.devoluciones.map((devolucion) => (
                 <article key={devolucion.id}>
                   <p>
-                    <strong>#{devolucion.id}</strong> · {fecha(devolucion.fecha_creacion)} ·{' '}
-                    {devolucion.motivo} · <strong>{dinero(devolucion.total)}</strong>
+                    <strong>#{devolucion.id}</strong> ·{' '}
+                    {fecha(devolucion.fecha_creacion)} · {devolucion.motivo} ·{' '}
+                    <strong>{dinero(devolucion.total)}</strong>
                   </p>
                   <ul>
                     {devolucion.detalles.map((item) => (
                       <li key={item.id}>
                         {Number(item.cantidad)} × {item.producto}
-                        {item.reintegra_stock ? ' · volvió al stock' : ' · sin retorno al stock'}
+                        {item.reintegra_stock
+                          ? ' · volvió al stock'
+                          : ' · sin retorno al stock'}
                       </li>
                     ))}
                   </ul>
@@ -640,7 +679,10 @@ export function Ecommerce({ token, permisos }) {
           {reembolsando &&
             detalle.estado !== 'entregado' &&
             saldoReembolsable > 0 && (
-              <form className="formulario formulario--grilla" onSubmit={reembolsar}>
+              <form
+                className="formulario formulario--grilla"
+                onSubmit={reembolsar}
+              >
                 <label>
                   Cuenta de devolución
                   <select name="cuenta" required>
@@ -698,7 +740,10 @@ export function Ecommerce({ token, permisos }) {
                     (devuelto) =>
                       Number(devuelto.pedido_detalle_id) === Number(item.id),
                   )
-                  .reduce((suma, devuelto) => suma + Number(devuelto.cantidad), 0);
+                  .reduce(
+                    (suma, devuelto) => suma + Number(devuelto.cantidad),
+                    0,
+                  );
                 const maximo =
                   Number(item.cantidad_confirmada ?? item.cantidad_solicitada) -
                   yaDevuelto;
@@ -750,7 +795,10 @@ export function Ecommerce({ token, permisos }) {
                 </label>
                 <label>
                   Referencia
-                  <input name="referencia" defaultValue={`DEV-${detalle.codigo}`} />
+                  <input
+                    name="referencia"
+                    defaultValue={`DEV-${detalle.codigo}`}
+                  />
                 </label>
               </div>
               <button className="boton">Calcular y registrar devolución</button>
@@ -812,9 +860,7 @@ export function Ecommerce({ token, permisos }) {
                   className="boton"
                   onClick={() => setReembolsando(!reembolsando)}
                 >
-                  {reembolsando
-                    ? 'Ocultar reintegro'
-                    : 'Reintegrar diferencia'}
+                  {reembolsando ? 'Ocultar reintegro' : 'Reintegrar diferencia'}
                 </button>
               )}
             {detalle.estado === 'entregado' &&
@@ -823,9 +869,7 @@ export function Ecommerce({ token, permisos }) {
                   className="boton"
                   onClick={() => setDevolviendo(!devolviendo)}
                 >
-                  {devolviendo
-                    ? 'Ocultar devolución'
-                    : 'Devolución parcial'}
+                  {devolviendo ? 'Ocultar devolución' : 'Devolución parcial'}
                 </button>
               )}
           </div>

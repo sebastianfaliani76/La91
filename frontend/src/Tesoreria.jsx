@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Modal } from './componentes/Modal.jsx';
 import { fechaParaInput, formatearFecha } from './utilidades/fechas.js';
+import { Paginacion } from './componentes/Paginacion.jsx';
 const moneda = (v) =>
     Number(v).toLocaleString('es-AR', { style: 'currency', currency: 'ARS' }),
   hoy = fechaParaInput;
@@ -34,9 +35,9 @@ export function Tesoreria({ token, permisos }) {
     [modalMovimiento, setModalMovimiento] = useState(false),
     [modalTransferencia, setModalTransferencia] = useState(false),
     [mensaje, setMensaje] = useState(''),
-    [procesando, setProcesando] = useState(false);
+    [procesando, setProcesando] = useState(false),
+    [limite, setLimite] = useState(25);
   const gestionar = permisos.includes('tesoreria.gestionar');
-  const limite = 15;
   const paginas = Math.max(1, Math.ceil(totalMovimientos / limite));
   const cargar = useCallback(async () => {
     try {
@@ -56,7 +57,7 @@ export function Tesoreria({ token, permisos }) {
     } catch (e) {
       setMensaje(e.message);
     }
-  }, [token, cuenta, tipo, buscar, pagina]);
+  }, [token, cuenta, tipo, buscar, pagina, limite]);
   useEffect(() => {
     const t = setTimeout(cargar, 250);
     return () => clearTimeout(t);
@@ -257,8 +258,21 @@ export function Tesoreria({ token, permisos }) {
           <span>
             Ingresos {moneda(totales.ingresos)} · Egresos{' '}
             {moneda(totales.egresos)}
-            {' · '}{totalMovimientos.toLocaleString('es-AR')} movimientos
+            {' · '}
+            {totalMovimientos.toLocaleString('es-AR')} movimientos
           </span>
+        </div>
+        <div className="paginacion--superior">
+          <Paginacion
+            pagina={pagina}
+            paginas={paginas}
+            limite={limite}
+            alCambiarPagina={setPagina}
+            alCambiarLimite={(v) => {
+              setLimite(v);
+              setPagina(1);
+            }}
+          />
         </div>
         <div className="tabla-contenedor">
           <table>
@@ -301,13 +315,33 @@ export function Tesoreria({ token, permisos }) {
           </table>
         </div>
         <div className="paginacion">
-          <button disabled={pagina === 1} onClick={() => setPagina((valor) => valor - 1)}>
+          <Paginacion
+            pagina={pagina}
+            paginas={paginas}
+            limite={limite}
+            alCambiarPagina={setPagina}
+            alCambiarLimite={(v) => {
+              setLimite(v);
+              setPagina(1);
+            }}
+          />
+          {/*
+          <button
+            disabled={pagina === 1}
+            onClick={() => setPagina((valor) => valor - 1)}
+          >
             Anterior
           </button>
-          <span>Página {pagina} de {paginas}</span>
-          <button disabled={pagina >= paginas} onClick={() => setPagina((valor) => valor + 1)}>
+          <span>
+            Página {pagina} de {paginas}
+          </span>
+          <button
+            disabled={pagina >= paginas}
+            onClick={() => setPagina((valor) => valor + 1)}
+          >
             Siguiente
           </button>
+          */}
         </div>
       </article>
       <Modal
