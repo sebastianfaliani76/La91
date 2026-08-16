@@ -467,36 +467,40 @@ export function Ecommerce({ token, permisos }) {
               registrarse un pago.
             </p>
           )}
-          <div className="tabla-contenedor">
-            <table>
-              <thead>
-                <tr>
-                  <th>Producto</th>
-                  <th>Cantidad</th>
-                  <th>Precio original</th>
-                  <th>Descuento</th>
-                  <th>Subtotal final</th>
-                </tr>
-              </thead>
-              <tbody>
-                {detalle.detalles.map((d) => (
-                  <tr key={d.id}>
-                    <td>{d.nombre_sustituto || d.nombre_producto}</td>
-                    <td>
-                      {Number(d.cantidad_confirmada ?? d.cantidad_solicitada)}
-                    </td>
-                    <td>{dinero(d.precio_unitario)}</td>
-                    <td className="importe-descuento">
-                      {Number(d.descuento) > 0
-                        ? `-${dinero(d.descuento)}`
-                        : '—'}
-                    </td>
-                    <td>{dinero(d.subtotal)}</td>
+          {detalle.estado !== 'en_preparacion' && (
+            <div className="tabla-contenedor">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Producto</th>
+                    <th>Cantidad</th>
+                    <th>Precio original</th>
+                    <th>Descuento</th>
+                    <th>Subtotal final</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {detalle.detalles.map((d) => (
+                    <tr key={d.id}>
+                      <td>{d.nombre_sustituto || d.nombre_producto}</td>
+                      <td>
+                        {Number(
+                          d.cantidad_confirmada ?? d.cantidad_solicitada,
+                        )}
+                      </td>
+                      <td>{dinero(d.precio_unitario)}</td>
+                      <td className="importe-descuento">
+                        {Number(d.descuento) > 0
+                          ? `-${dinero(d.descuento)}`
+                          : '—'}
+                      </td>
+                      <td>{dinero(d.subtotal)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
           {detalle.estado === 'en_preparacion' && (
             <form className="preparacion-pedido" onSubmit={preparar}>
               <h3>Confirmar cantidades preparadas</h3>
