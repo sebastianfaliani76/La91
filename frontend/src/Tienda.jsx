@@ -60,6 +60,8 @@ export function MapaEntrega({ origen, ubicacion, alCambiar, mostrarRecorrido = t
     return () => {
       instancia.remove();
       mapa.current = null;
+      marcadorEntrega.current = null;
+      lineaEntrega.current = null;
     };
   }, [origen]);
 
