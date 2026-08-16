@@ -1806,6 +1806,13 @@ textarea {
   color: var(--color-negro);
   background: var(--color-blanco);
   font: inherit;
+  font-weight: 400;
+}
+
+input::placeholder,
+textarea::placeholder,
+select option {
+  font-weight: 400;
 }
 input:focus,
 select:focus,
