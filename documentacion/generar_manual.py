@@ -8,7 +8,7 @@ from docx.oxml.ns import qn
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-OUT = ROOT / 'documentacion' / 'Manual_de_Usuario_La_91_v0.12.docx'
+OUT = ROOT / 'documentacion' / 'Manual_de_Usuario_La_91_v0.13.docx'
 LOGO = ROOT / 'frontend' / 'public' / 'marca' / 'logo-horizontal-claro.png'
 CAPTURAS = ROOT / 'documentacion' / 'capturas_manual'
 CAPTURA = CAPTURAS / '01-acceso.png'
@@ -113,7 +113,7 @@ def screenshot_placeholder(modulo):
 
 # Encabezado y pie
 h=sec.header.paragraphs[0]; h.alignment=WD_ALIGN_PARAGRAPH.LEFT; font(h.add_run('LA 91 SUPERMERCADO  |  MANUAL DE USUARIO'),8.5,VERDE,True)
-f=sec.footer.paragraphs[0]; f.alignment=WD_ALIGN_PARAGRAPH.CENTER; font(f.add_run('Versión preliminar 0.12 · Agosto 2026 · Uso interno y capacitación'),8,GRIS)
+f=sec.footer.paragraphs[0]; f.alignment=WD_ALIGN_PARAGRAPH.CENTER; font(f.add_run('Versión preliminar 0.13 · Agosto 2026 · Uso interno y capacitación'),8,GRIS)
 
 # Portada editorial
 doc.add_paragraph().paragraph_format.space_after=Pt(70)
@@ -123,13 +123,13 @@ p=doc.add_paragraph(); p.alignment=WD_ALIGN_PARAGRAPH.CENTER; font(p.add_run('MA
 p=doc.add_paragraph(); p.style='Title'; p.alignment=WD_ALIGN_PARAGRAPH.CENTER; p.add_run('Sistema de Gestión\nLa 91 Supermercado')
 p=doc.add_paragraph(); p.style='Subtitle'; p.alignment=WD_ALIGN_PARAGRAPH.CENTER; p.add_run('Guía operativa para administración, supervisión y caja')
 doc.add_paragraph().paragraph_format.space_after=Pt(90)
-p=doc.add_paragraph(); p.alignment=WD_ALIGN_PARAGRAPH.CENTER; font(p.add_run('VERSIÓN PRELIMINAR 0.12'),11,VERDE,True)
+p=doc.add_paragraph(); p.alignment=WD_ALIGN_PARAGRAPH.CENTER; font(p.add_run('VERSIÓN PRELIMINAR 0.13'),11,VERDE,True)
 p=doc.add_paragraph(); p.alignment=WD_ALIGN_PARAGRAPH.CENTER; font(p.add_run('Agosto de 2026'),10,GRIS)
 note('Estado del documento.', 'Esta edición incorpora capturas reales obtenidas con los datos de la prueba funcional. Se actualizará cuando cambien pantallas o circuitos.', 'EAF4F6')
 
 page(); heading('Control del documento')
 table(['Campo','Detalle'],[
- ('Documento','Manual de usuario del Sistema de Gestión La 91 Supermercado'),('Versión','0.12 – preliminar ilustrada'),('Fecha','Agosto de 2026'),('Destinatarios','Administrador, supervisor, cajero y personal autorizado'),('Objetivo','Explicar la operación habitual y los controles necesarios'),('Próxima revisión','Cuando cambien pantallas o circuitos operativos')],[1.65,4.85])
+ ('Documento','Manual de usuario del Sistema de Gestión La 91 Supermercado'),('Versión','0.13 – preliminar ilustrada'),('Fecha','Agosto de 2026'),('Destinatarios','Administrador, supervisor, cajero y personal autorizado'),('Objetivo','Explicar la operación habitual y los controles necesarios'),('Próxima revisión','Cuando cambien pantallas o circuitos operativos')],[1.65,4.85])
 heading('Cómo utilizar este manual',2)
 doc.add_paragraph('Cada capítulo describe el objetivo del módulo, el procedimiento habitual y los controles que deben respetarse. Los nombres de botones y opciones aparecen tal como se muestran en el sistema.')
 note('Regla general.', 'Nunca comparta su contraseña. No elimine ni corrija movimientos financieros por fuera del procedimiento autorizado. Ante una diferencia, registre lo ocurrido y comuníquelo al supervisor.')
@@ -292,6 +292,14 @@ note('Tesorería.', 'Registrar el pago genera un único ingreso en la cuenta sel
 heading('15.6 Entregar y registrar la venta',2)
 steps(['Con el pedido Listo y el pago aprobado, seleccione Entregar y registrar venta.','Compruebe que el pedido quede Entregado.','Revise que el stock físico disminuya y la reserva vuelva a cero.','Abra Punto de venta y seleccione Historial para consultar la venta con canal e-commerce.'])
 bullets(['La venta online aparece como Venta online y no requiere una caja física.','Los reportes incorporan la venta, el costo y el margen.','El movimiento de Tesorería proviene del cobro, no de la entrega.'])
+heading('15.7 Cancelar un pedido y realizar el reembolso total',2)
+steps(['Abra E-commerce > Pedidos y seleccione Ver en el pedido.','Compruebe los productos, el total pagado y la cuenta utilizada para el cobro.','Seleccione Cancelar y confirme el motivo.','Registre el reembolso desde la cuenta de Tesorería correspondiente.','Compruebe que el pedido figure Cancelado y que ya no permita registrar nuevos pagos.','Revise que la reserva de todos los productos haya sido liberada.','Controle en Tesorería el egreso por el importe reembolsado.'])
+note('Control del reintegro.', 'El detalle debe separar el total pagado, el total reembolsado y cualquier saldo pendiente de reintegro. Cancelar libera la reserva, pero el movimiento de dinero se registra al confirmar el reembolso desde la cuenta seleccionada.')
+heading('15.8 Devolución parcial por producto',2)
+doc.add_paragraph('La devolución parcial se utiliza cuando el cliente devuelve uno o varios artículos sin cancelar el resto del pedido. El pedido conserva su operación válida y solamente se revierten las unidades seleccionadas.')
+steps(['Abra el detalle del pedido pagado y seleccione Devolución parcial.','Marque el producto y la cantidad que devuelve el cliente.','Ingrese el motivo de la devolución.','Seleccione la cuenta de Tesorería desde la cual se realizará el reintegro.','Revise el importe calculado y confirme mediante el modal.','Compruebe que el pedido continúe activo y conserve los productos no devueltos.','Verifique que solamente las unidades devueltas regresen al stock.','Controle el egreso correspondiente en el libro de Tesorería y el historial dentro del pedido.'])
+bullets(['El reintegro se calcula utilizando el precio promocional efectivamente pagado, no el precio original sin descuento.','No se puede devolver una cantidad superior a la comprada ni volver a devolver unidades ya reintegradas.','Una devolución parcial no cancela automáticamente todo el pedido.','El detalle del pedido conserva producto, cantidad, motivo, cuenta e importe para auditoría.'])
+note('Resultado validado.', 'Durante la prueba funcional se confirmó que el pedido permaneció activo, el stock recuperó solamente la cantidad devuelta y Tesorería registró únicamente el importe reintegrado.')
 
 page(); heading('16. Cierre diario y controles')
 heading('16.1 Cajero',2)
@@ -313,7 +321,7 @@ heading('Registro de incidencias de la prueba',2)
 table(['Fecha','Módulo','Situación observada','Prioridad','Resolución'],[('','','','',''),('','','','',''),('','','','',''),('','','','','')],[.8,1.05,2.75,.8,1.1])
 
 doc.core_properties.title='Manual de Usuario - Sistema de Gestión La 91 Supermercado'
-doc.core_properties.subject='Guía operativa ilustrada, versión 0.12'
+doc.core_properties.subject='Guía operativa ilustrada, versión 0.13'
 doc.core_properties.author='La 91 Supermercado'
 doc.core_properties.keywords='supermercado, manual, usuario, caja, inventario, tesorería'
 OUT.parent.mkdir(parents=True,exist_ok=True)
