@@ -537,6 +537,20 @@ export function Tienda() {
             Number(distanciaCheckout || 0)
       : 0;
   const totalCheckout = totalProductosCheckout + costoEnvioCheckout;
+  const zonaPedidoMinimo = zonaCheckout
+    ? portada.zonas.find((zona) => String(zona.id) === String(zonaCheckout))
+    : null;
+  const pedidoMinimoCheckout = Math.max(
+    Number(portada.configuracion.pedido_minimo || 0),
+    modalidadCheckout === 'envio'
+      ? Number(zonaPedidoMinimo?.pedido_minimo || 0)
+      : 0,
+  );
+  const faltantePedidoMinimo = Math.max(
+    0,
+    pedidoMinimoCheckout - totalProductosCheckout,
+  );
+  const cumplePedidoMinimo = faltantePedidoMinimo < 0.01;
   const productoBanner = productosPromocion[promocionActiva] || null;
   return (
     <div className="tienda">
@@ -1152,6 +1166,14 @@ export function Tienda() {
               Acepto sustituciones similares
             </label>
             {mensaje && <p className={mensaje.startsWith('Recorrido calculado:') ? 'mensaje-exito' : 'mensaje-error'}>{mensaje}</p>}
+            {!cumplePedidoMinimo && (
+              <p className="mensaje-error mensaje-minimo-pedido" role="alert">
+                El pedido mínimo se calcula sobre los productos después de los
+                descuentos, sin incluir el envío. Llevás{' '}
+                <strong>{dinero(totalProductosCheckout)}</strong> y faltan{' '}
+                <strong>{dinero(faltantePedidoMinimo)}</strong>.
+              </p>
+            )}
             <div className="resumen-pedido-online tienda__resumen-checkout">
               <span>
                 Subtotal original{' '}
@@ -1168,6 +1190,13 @@ export function Tienda() {
                 </strong>
               </span>
               <span>
+                Productos después de descuentos{' '}
+                <strong>{dinero(totalProductosCheckout)}</strong>
+              </span>
+              <span>
+                Pedido mínimo <strong>{dinero(pedidoMinimoCheckout)}</strong>
+              </span>
+              <span>
                 Envío{' '}
                 <strong>
                   {costoEnvioCheckout
@@ -1179,7 +1208,13 @@ export function Tienda() {
                 Total a pagar <strong>{dinero(totalCheckout)}</strong>
               </span>
             </div>
-            <button className="boton" disabled={modalidadCheckout === 'envio' && !rutaEntregaValida}>
+            <button
+              className="boton"
+              disabled={
+                !cumplePedidoMinimo ||
+                (modalidadCheckout === 'envio' && !rutaEntregaValida)
+              }
+            >
               Confirmar pedido · {dinero(totalCheckout)}
             </button>
           </form>

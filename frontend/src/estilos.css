@@ -270,6 +270,9 @@
   grid-column: 1 / -1;
   margin: 0;
 }
+.tienda__checkout > .mensaje-minimo-pedido {
+  text-align: right;
+}
 .tienda__checkout > .tienda__resumen-checkout {
   grid-column: 3 / -1;
   margin: 0;
