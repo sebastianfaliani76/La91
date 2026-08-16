@@ -503,6 +503,21 @@ export function Tienda() {
   const zonaSeleccionada = portada.zonas.find(
     (z) => String(z.id) === String(zonaCheckout || portada.zonas[0]?.id),
   );
+  const distanciaFueraCobertura =
+    recorridoCheckout.length > 0 &&
+    Number(distanciaCheckout) >
+      Number(portada.configuracion.distancia_maxima_km);
+  const zonaCalculada = portada.zonas.find(
+    (zona) =>
+      zona.localidad === localidadCheckout &&
+      Number(distanciaCheckout) >= Number(zona.distancia_desde_km) &&
+      Number(distanciaCheckout) <= Number(zona.distancia_hasta_km),
+  );
+  const mensajeCobertura = distanciaFueraCobertura
+    ? `Fuera del área de cobertura. La distancia máxima permitida es ${Number(portada.configuracion.distancia_maxima_km).toLocaleString('es-AR')} km por calles.`
+    : recorridoCheckout.length > 0 && !zonaCalculada
+      ? `No hay una zona de entrega habilitada para este punto de ${localidadCheckout}.`
+      : '';
   const rutaEntregaValida =
     !calculandoRuta &&
     recorridoCheckout.length > 0 &&
@@ -1068,6 +1083,11 @@ export function Tienda() {
                   required={modalidadCheckout === 'envio'}
                 />
               </label>
+              {mensajeCobertura && (
+                <p className="advertencia-cobertura" role="alert">
+                  {mensajeCobertura}
+                </p>
+              )}
               {origenEntrega && (
                 <div className="selector-ubicacion-entrega">
                   <div className="selector-ubicacion-entrega__acciones">

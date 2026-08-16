@@ -286,6 +286,18 @@
   gap: 8px;
   margin-top: 4px;
 }
+.advertencia-cobertura {
+  grid-column: 2 / -1;
+  align-self: end;
+  min-height: 36px;
+  margin: 0;
+  padding: 8px 10px;
+  border-left: 4px solid #b42318;
+  border-radius: 5px;
+  color: #7a1d17;
+  background: #fff0ef;
+  line-height: 1.35;
+}
 .selector-ubicacion-entrega__acciones {
   display: flex;
   flex-wrap: wrap;
@@ -409,6 +421,9 @@
   .tienda__checkout,
   .tienda__checkout fieldset {
     grid-template-columns: 1fr;
+  }
+  .advertencia-cobertura {
+    grid-column: 1;
   }
   .tienda__checkout > .campo-cupon-checkout,
   .tienda__checkout > .fila-check,
