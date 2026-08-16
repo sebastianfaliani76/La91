@@ -1073,7 +1073,10 @@ export function Tienda() {
                   />
                   {ubicacionCheckout && (
                     <p className="ubicacion-entrega-confirmada">
-                      Punto confirmado · {distanciaCheckout} km del comercio
+                      Punto confirmado · Latitud{' '}
+                      {Number(ubicacionCheckout.latitud).toFixed(6)} · Longitud{' '}
+                      {Number(ubicacionCheckout.longitud).toFixed(6)} ·{' '}
+                      {distanciaCheckout} km del comercio
                     </p>
                   )}
                 </div>
