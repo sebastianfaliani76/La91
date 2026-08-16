@@ -461,6 +461,14 @@ export function Ecommerce({ token, permisos }) {
             {detalle.modalidad_entrega} · {detalle.medio_pago} · Pago:{' '}
             {detalle.estado_pago}
           </p>
+          {detalle.modalidad_entrega === 'envio' && (
+            <div className="datos-entrega-pedido">
+              <span><strong>Dirección</strong>{detalle.direccion_cliente}</span>
+              <span><strong>Localidad</strong>{detalle.localidad_cliente}</span>
+              <span><strong>Zona</strong>{detalle.zona || '—'}</span>
+              <span><strong>Distancia por calles</strong>{Number(detalle.distancia_km).toLocaleString('es-AR')} km</span>
+            </div>
+          )}
           {detalle.estado === 'cancelado' && (
             <p className="mensaje-informativo">
               Pedido cancelado. La reserva de stock fue liberada y ya no puede

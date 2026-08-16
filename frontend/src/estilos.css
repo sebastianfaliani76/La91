@@ -2480,6 +2480,34 @@ th {
   gap: 4px;
   margin: 12px 0;
 }
+
+.datos-entrega-pedido {
+  display: grid;
+  grid-template-columns: minmax(220px, 2fr) repeat(3, minmax(110px, 1fr));
+  gap: 8px 18px;
+  margin: 10px 0;
+  padding: 10px 12px;
+  border: 1px solid #c4dfe6;
+  border-radius: 8px;
+  background: #f5fafb;
+}
+
+.datos-entrega-pedido span,
+.datos-entrega-pedido strong {
+  display: block;
+}
+
+.datos-entrega-pedido strong {
+  margin-bottom: 3px;
+  color: #07575b;
+  font-size: 0.92em;
+}
+
+@media (max-width: 760px) {
+  .datos-entrega-pedido {
+    grid-template-columns: 1fr 1fr;
+  }
+}
 .resumen-pedido-admin span {
   display: flex;
   justify-content: space-between;

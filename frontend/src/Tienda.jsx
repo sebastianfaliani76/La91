@@ -204,12 +204,19 @@ export function Tienda() {
     setUbicacionCheckout(ubicacion);
     setRecorridoCheckout([]);
     setDistanciaCheckout('');
-    if (!origenEntrega) return false;
     const solicitud = ++solicitudRuta.current;
     setCalculandoRuta(true);
     setMensaje('Calculando recorrido por calles…');
     try {
-      const coordenadas = `${origenEntrega.longitud},${origenEntrega.latitud};${ubicacion.longitud},${ubicacion.latitud}`;
+      const configuracionActual = await api('/publico/configuracion');
+      if (solicitud !== solicitudRuta.current) return false;
+      setPortada(configuracionActual.dato);
+      const latitudOrigen = Number(configuracionActual.dato.configuracion.latitud_origen);
+      const longitudOrigen = Number(configuracionActual.dato.configuracion.longitud_origen);
+      if (!Number.isFinite(latitudOrigen) || !Number.isFinite(longitudOrigen)) {
+        throw new Error('El comercio no tiene una ubicación válida configurada.');
+      }
+      const coordenadas = `${longitudOrigen},${latitudOrigen};${ubicacion.longitud},${ubicacion.latitud}`;
       const respuesta = await fetch(`https://router.project-osrm.org/route/v1/driving/${coordenadas}?overview=full&geometries=geojson&steps=false`);
       if (!respuesta.ok) throw new Error('No se pudo consultar el recorrido.');
       const resultado = await respuesta.json();
