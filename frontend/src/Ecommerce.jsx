@@ -504,11 +504,27 @@ export function Ecommerce({ token, permisos }) {
                 Reducí la cantidad o ingresá cero para quitar un producto. El
                 stock reservado y el total se recalcularán automáticamente.
               </p>
+              <div
+                className="preparacion-pedido__encabezado"
+                aria-hidden="true"
+              >
+                <span>Producto</span>
+                <span>Pedido</span>
+                <span>Preparado</span>
+                <span>Observación</span>
+              </div>
               {detalle.detalles.map((item) => (
                 <div className="preparacion-pedido__item" key={item.id}>
-                  <span>{item.nombre_sustituto || item.nombre_producto}</span>
+                  <strong>
+                    {item.nombre_sustituto || item.nombre_producto}
+                  </strong>
+                  <span className="preparacion-pedido__solicitado">
+                    {Number(item.cantidad_solicitada).toLocaleString('es-AR')}
+                  </span>
                   <label>
-                    Cantidad
+                    <span className="preparacion-pedido__etiqueta-movil">
+                      Preparado
+                    </span>
                     <input
                       name={`cantidad-${item.id}`}
                       type="number"
@@ -521,7 +537,9 @@ export function Ecommerce({ token, permisos }) {
                     />
                   </label>
                   <label>
-                    Observación
+                    <span className="preparacion-pedido__etiqueta-movil">
+                      Observación
+                    </span>
                     <input
                       name={`observaciones-${item.id}`}
                       defaultValue=""
