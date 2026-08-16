@@ -1099,14 +1099,14 @@ export function Tienda() {
                         ? 'Buscando…'
                         : 'Buscar dirección en el mapa'}
                     </button>
+                    <p className="advertencia-verificar-mapa" role="note">
+                      Verificá que el marcador coincida con la dirección exacta.
+                      La ubicación automática puede tener diferencias; si es
+                      necesario, hacé clic en el punto correcto del mapa para
+                      ajustarla manualmente. La distancia y el costo se
+                      recalcularán por calles.
+                    </p>
                   </div>
-                  <p className="advertencia-verificar-mapa" role="note">
-                    Verificá que el marcador coincida con la dirección exacta.
-                    La ubicación automática puede tener diferencias; si es
-                    necesario, hacé clic en el punto correcto del mapa para
-                    ajustarla manualmente. La distancia y el costo se
-                    recalcularán por calles.
-                  </p>
                   <MapaEntrega
                     origen={origenEntrega}
                     ubicacion={ubicacionCheckout}

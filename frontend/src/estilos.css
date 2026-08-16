@@ -316,13 +316,15 @@
 }
 .selector-ubicacion-entrega__acciones {
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
 }
 .selector-ubicacion-entrega__acciones .boton {
+  flex: 0 0 auto;
   margin: 0;
 }
 .advertencia-verificar-mapa {
+  flex: 1 1 auto;
   margin: 0;
   padding: 8px 10px;
   border-left: 4px solid #b7791f;
