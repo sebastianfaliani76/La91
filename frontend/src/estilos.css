@@ -1031,7 +1031,7 @@
   border: 0;
   color: #aab7b9;
   background: transparent;
-  font-size: 1rem;
+  font-size: 1.3rem;
   line-height: 1;
   cursor: pointer;
 }
@@ -1052,23 +1052,12 @@
   border-color: var(--color-acento-500);
   box-shadow: 0 4px 14px rgb(0 59 70 / 10%);
 }
-.tienda__estado-carrito {
-  display: flex;
-  align-items: center;
-  min-height: 24px;
-  margin-top: auto;
-  color: var(--color-primario-700);
-  font-size: 0.78rem;
-}
-.tienda__estado-carrito span {
-  font-weight: 600;
-}
 .tienda__acciones-producto {
   display: flex;
   align-items: center;
   justify-content: space-between;
   min-height: 42px;
-  margin-top: 4px;
+  margin-top: auto;
 }
 .tienda__productos article .tienda__agregar-carrito {
   position: relative;

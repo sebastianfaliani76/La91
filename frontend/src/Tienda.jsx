@@ -621,13 +621,6 @@ export function Tienda() {
                   ) : (
                     <strong>{dinero(p.precio)}</strong>
                   )}
-                  <div className="tienda__estado-carrito" aria-live="polite">
-                    {itemCarrito && (
-                      <span>
-                        ✓ Agregado al carrito · {itemCarrito.cantidad}
-                      </span>
-                    )}
-                  </div>
                   <div className="tienda__acciones-producto">
                     <button
                       type="button"
