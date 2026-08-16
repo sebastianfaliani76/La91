@@ -552,90 +552,114 @@ export function Tienda() {
             />
           </div>
           <div className="tienda__productos">
-            {productos.map((p) => (
-              <article key={p.id}>
-                <div className="tienda__foto">
-                  {Number(p.descuento_porcentaje) > 0 && (
-                    <span className="tienda__descuento-producto">
-                      -{Math.round(Number(p.descuento_porcentaje))}%
-                    </span>
-                  )}
-                  <button
-                    type="button"
-                    className={`tienda__favorito ${favoritos.includes(Number(p.id)) ? 'activo' : ''}`}
-                    aria-label={
-                      favoritos.includes(Number(p.id))
-                        ? `Quitar ${p.nombre} de favoritos`
-                        : `Agregar ${p.nombre} a favoritos`
-                    }
-                    onClick={() => alternarFavorito(p.id)}
-                  >
-                    {favoritos.includes(Number(p.id)) ? '♥' : '♡'}
-                  </button>
-                  {Number(p.disponible_online) <= 0 && (
-                    <span className="tienda__sin-stock">SIN STOCK</span>
-                  )}
-                  {p.imagen_url ? (
-                    <img src={p.imagen_url} alt={p.nombre} />
-                  ) : (
-                    <span>LA 91</span>
-                  )}
-                </div>
-                <small>
-                  {p.categoria}
-                  {p.marca ? ` · ${p.marca}` : ''}
-                </small>
-                <h3>{p.nombre}</h3>
-                {Number(p.descuento_porcentaje) > 0 ? (
-                  <div className="tienda__precio-promocional">
-                    <del>{dinero(p.precio)}</del>
-                    <strong>
-                      {dinero(
-                        Number(p.precio) *
-                          (1 - Number(p.descuento_porcentaje) / 100),
-                      )}
-                    </strong>
-                  </div>
-                ) : (
-                  <strong>{dinero(p.precio)}</strong>
-                )}
-                <div
-                  className="tienda__valoracion"
-                  aria-label="Valoración del producto"
+            {productos.map((p) => {
+              const itemCarrito = carrito.find((item) => item.id === p.id);
+              return (
+                <article
+                  key={p.id}
+                  className={itemCarrito ? 'tienda__producto--agregado' : ''}
                 >
-                  {[1, 2, 3, 4, 5].map((estrella) => (
+                  <div className="tienda__foto">
+                    {Number(p.descuento_porcentaje) > 0 && (
+                      <span className="tienda__descuento-producto">
+                        -{Math.round(Number(p.descuento_porcentaje))}%
+                      </span>
+                    )}
+                    {Number(p.disponible_online) <= 0 && (
+                      <span className="tienda__sin-stock">SIN STOCK</span>
+                    )}
+                    {p.imagen_url ? (
+                      <img src={p.imagen_url} alt={p.nombre} />
+                    ) : (
+                      <span>LA 91</span>
+                    )}
+                  </div>
+                  <small>
+                    {p.categoria}
+                    {p.marca ? ` · ${p.marca}` : ''}
+                  </small>
+                  <h3>{p.nombre}</h3>
+                  {Number(p.descuento_porcentaje) > 0 ? (
+                    <div className="tienda__precio-promocional">
+                      <del>{dinero(p.precio)}</del>
+                      <strong>
+                        {dinero(
+                          Number(p.precio) *
+                            (1 - Number(p.descuento_porcentaje) / 100),
+                        )}
+                      </strong>
+                    </div>
+                  ) : (
+                    <strong>{dinero(p.precio)}</strong>
+                  )}
+                  <div
+                    className="tienda__valoracion"
+                    aria-label="Valoración del producto"
+                  >
+                    {[1, 2, 3, 4, 5].map((estrella) => (
+                      <button
+                        type="button"
+                        key={estrella}
+                        className={
+                          estrella <=
+                          Number(valoraciones[p.id] || p.valoracion_promedio)
+                            ? 'activa'
+                            : ''
+                        }
+                        aria-label={`Valorar con ${estrella} estrellas`}
+                        onClick={() => valorar(p.id, estrella)}
+                      >
+                        ★
+                      </button>
+                    ))}
+                    <small>
+                      {Number(p.valoraciones) > 0
+                        ? `${Number(p.valoracion_promedio).toLocaleString('es-AR')} (${p.valoraciones})`
+                        : 'Sin valoraciones'}
+                    </small>
+                  </div>
+                  <p>
+                    {Number(p.disponible_online) > 0
+                      ? 'Disponible'
+                      : 'Sin stock'}
+                  </p>
+                  <div className="tienda__estado-carrito" aria-live="polite">
+                    {itemCarrito && (
+                      <span>
+                        ✓ Agregado al carrito · {itemCarrito.cantidad}
+                      </span>
+                    )}
+                  </div>
+                  <div className="tienda__acciones-producto">
                     <button
                       type="button"
-                      key={estrella}
-                      className={
-                        estrella <=
-                        Number(valoraciones[p.id] || p.valoracion_promedio)
-                          ? 'activa'
-                          : ''
+                      className={`tienda__favorito ${favoritos.includes(Number(p.id)) ? 'activo' : ''}`}
+                      aria-label={
+                        favoritos.includes(Number(p.id))
+                          ? `Quitar ${p.nombre} de favoritos`
+                          : `Agregar ${p.nombre} a favoritos`
                       }
-                      aria-label={`Valorar con ${estrella} estrellas`}
-                      onClick={() => valorar(p.id, estrella)}
+                      onClick={() => alternarFavorito(p.id)}
                     >
-                      ★
+                      {favoritos.includes(Number(p.id)) ? '♥' : '♡'}
                     </button>
-                  ))}
-                  <small>
-                    {Number(p.valoraciones) > 0
-                      ? `${Number(p.valoracion_promedio).toLocaleString('es-AR')} (${p.valoraciones})`
-                      : 'Sin valoraciones'}
-                  </small>
-                </div>
-                <p>
-                  {Number(p.disponible_online) > 0 ? 'Disponible' : 'Sin stock'}
-                </p>
-                <button
-                  disabled={!abierta || Number(p.disponible_online) <= 0}
-                  onClick={() => agregar(p)}
-                >
-                  Agregar
-                </button>
-              </article>
-            ))}
+                    <button
+                      type="button"
+                      className="tienda__agregar-carrito"
+                      disabled={!abierta || Number(p.disponible_online) <= 0}
+                      aria-label={`Agregar ${p.nombre} al carrito`}
+                      title="Agregar al carrito"
+                      onClick={() => agregar(p)}
+                    >
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M3 4h2l2.2 10.1a2 2 0 0 0 2 1.6h7.9a2 2 0 0 0 1.9-1.4L21 8H7M10 20a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm9 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z" />
+                      </svg>
+                      {itemCarrito && <span>{itemCarrito.cantidad}</span>}
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
           </div>
           {!productos.length && <p>No hay productos para esta búsqueda.</p>}
           <Paginacion
