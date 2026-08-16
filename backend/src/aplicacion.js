@@ -1,6 +1,7 @@
 import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
+import { existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -23,9 +24,35 @@ import { rutasEcommerce } from './modulos/ecommerce/ecommerce.rutas.js';
 
 export const aplicacion = express();
 const carpetaProyecto = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
+const carpetaFrontend = resolve(carpetaProyecto, 'frontend/dist');
 
 aplicacion.disable('x-powered-by');
-aplicacion.use(helmet());
+aplicacion.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: [
+          "'self'",
+          'data:',
+          'blob:',
+          'https://*.tile.openstreetmap.org',
+        ],
+        connectSrc: [
+          "'self'",
+          'https://router.project-osrm.org',
+          'https://nominatim.openstreetmap.org',
+        ],
+        fontSrc: ["'self'", 'data:'],
+        objectSrc: ["'none'"],
+        baseUri: ["'self'"],
+        frameAncestors: ["'self'"],
+      },
+    },
+  }),
+);
 aplicacion.use(cors({ origin: entorno.origenFrontend }));
 aplicacion.use(express.json({ limit: '1mb' }));
 aplicacion.use(
@@ -55,6 +82,17 @@ aplicacion.get('/api/salud', async (_solicitud, respuesta) => {
     respuesta.status(503).json({ estado: 'degradado', base_datos: 'sin_conexion' });
   }
 });
+
+if (existsSync(carpetaFrontend)) {
+  aplicacion.use(express.static(carpetaFrontend));
+  aplicacion.use((solicitud, respuesta, siguiente) => {
+    if (solicitud.method !== 'GET' || !solicitud.accepts('html')) {
+      siguiente();
+      return;
+    }
+    respuesta.sendFile(resolve(carpetaFrontend, 'index.html'));
+  });
+}
 
 aplicacion.use((_solicitud, respuesta) => {
   respuesta.status(404).json({ mensaje: 'Ruta no encontrada' });
