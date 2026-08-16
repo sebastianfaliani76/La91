@@ -1,5 +1,5 @@
 import { closeSync, openSync } from 'node:fs';
-import { mkdir, stat, unlink } from 'node:fs/promises';
+import { mkdir, readFile, stat, unlink, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -59,14 +59,13 @@ const respaldoLocal = resolve(
 );
 const respaldoRemoto = resolve(
   directorio,
-  `${destino.nombre}_railway_antes_${marca}.sql`,
+  `${destino.nombre}_railway_antes_${marca}.json`,
 );
 
 await mkdir(directorio, { recursive: true });
 const utilidadDump = await encontrarEjecutable('dump');
-const utilidadCliente = await encontrarEjecutable('cliente');
 
-async function respaldar(configuracion, archivo) {
+async function respaldarLocal(configuracion, archivo) {
   const salida = openSync(archivo, 'wx');
   try {
     await ejecutar(
@@ -95,34 +94,72 @@ async function respaldar(configuracion, archivo) {
   }
 }
 
+async function conectarRailway(opciones = {}) {
+  return mysql.createConnection({
+    host: destino.host,
+    port: destino.puerto,
+    database: destino.nombre,
+    user: destino.usuario,
+    password: destino.clave,
+    dateStrings: true,
+    ...opciones,
+  });
+}
+
+async function respaldarRailwayComoJson(archivo) {
+  const conexion = await conectarRailway();
+  try {
+    const [filasTablas] = await conexion.query('SHOW TABLES');
+    const tablas = [];
+    for (const fila of filasTablas) {
+      const nombre = Object.values(fila)[0];
+      const nombreSeguro = String(nombre).replaceAll('`', '``');
+      const [[creacion]] = await conexion.query(
+        `SHOW CREATE TABLE \`${nombreSeguro}\``,
+      );
+      const [datos] = await conexion.query(
+        `SELECT * FROM \`${nombreSeguro}\``,
+      );
+      tablas.push({
+        nombre,
+        estructura: Object.values(creacion)[1],
+        datos,
+      });
+    }
+    await writeFile(
+      archivo,
+      JSON.stringify(
+        {
+          base_datos: destino.nombre,
+          fecha: new Date().toISOString(),
+          tablas,
+        },
+        null,
+        2,
+      ),
+      'utf8',
+    );
+  } finally {
+    await conexion.end();
+  }
+}
+
 console.log('Creando respaldo de seguridad de la base local...');
-await respaldar(entorno.baseDatos, respaldoLocal);
+await respaldarLocal(entorno.baseDatos, respaldoLocal);
 console.log(`Respaldo local: ${respaldoLocal}`);
 
 console.log('Creando respaldo de seguridad de la base actual en Railway...');
-await respaldar(destino, respaldoRemoto);
+await respaldarRailwayComoJson(respaldoRemoto);
 console.log(`Respaldo previo de Railway: ${respaldoRemoto}`);
 
 console.log(`Clonando la base local sobre Railway (${destino.nombre})...`);
-const entrada = openSync(respaldoLocal, 'r');
+const sql = (await readFile(respaldoLocal, 'utf8')).replace(
+  /^\/\*M!999999\\- enable the sandbox mode \*\/\r?\n?/,
+  '',
+);
+const conexion = await conectarRailway({ multipleStatements: true });
 try {
-  await ejecutar(
-    utilidadCliente,
-    [...argumentosConexion(destino), destino.nombre],
-    { clave: destino.clave, stdio: [entrada, 'ignore', 'pipe'] },
-  );
-} finally {
-  closeSync(entrada);
-}
-
-const conexion = await mysql.createConnection({
-  host: destino.host,
-  port: destino.puerto,
-  database: destino.nombre,
-  user: destino.usuario,
-  password: destino.clave,
-});
-try {
+  await conexion.query(sql);
   const [[tablas], [usuarios], [productos]] = await Promise.all([
     conexion.query(
       'SELECT COUNT(*) AS total FROM information_schema.tables WHERE table_schema = ?',
