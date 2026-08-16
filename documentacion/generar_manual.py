@@ -8,7 +8,7 @@ from docx.oxml.ns import qn
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-OUT = ROOT / 'documentacion' / 'Manual_de_Usuario_La_91_v0.13.docx'
+OUT = ROOT / 'documentacion' / 'Manual_de_Usuario_La_91_v0.14.docx'
 LOGO = ROOT / 'frontend' / 'public' / 'marca' / 'logo-horizontal-claro.png'
 CAPTURAS = ROOT / 'documentacion' / 'capturas_manual'
 CAPTURA = CAPTURAS / '01-acceso.png'
@@ -102,6 +102,11 @@ def screenshot_placeholder(modulo):
             ('14-nuevo-usuario-modal.png', 'Formulario para crear un usuario.'),
         ],
         'Reportes': [('09-reportes.png', 'Análisis comercial agrupado por circuito.')],
+        'Tienda online': [('15-tienda-online.png', 'Tienda online con promociones, categorías, productos y paginación.')],
+        'Compra online': [
+            ('16-carrito-online.png', 'Carrito con cantidades, subtotales y acceso a la confirmación.'),
+            ('17-checkout-online.png', 'Formulario de entrega, pago, cupón y confirmación del pedido.'),
+        ],
     }
     for archivo, descripcion in capturas.get(modulo, []):
         ruta = CAPTURAS / archivo
@@ -113,7 +118,7 @@ def screenshot_placeholder(modulo):
 
 # Encabezado y pie
 h=sec.header.paragraphs[0]; h.alignment=WD_ALIGN_PARAGRAPH.LEFT; font(h.add_run('LA 91 SUPERMERCADO  |  MANUAL DE USUARIO'),8.5,VERDE,True)
-f=sec.footer.paragraphs[0]; f.alignment=WD_ALIGN_PARAGRAPH.CENTER; font(f.add_run('Versión preliminar 0.13 · Agosto 2026 · Uso interno y capacitación'),8,GRIS)
+f=sec.footer.paragraphs[0]; f.alignment=WD_ALIGN_PARAGRAPH.CENTER; font(f.add_run('Versión preliminar 0.14 · Agosto 2026 · Uso interno y capacitación'),8,GRIS)
 
 # Portada editorial
 doc.add_paragraph().paragraph_format.space_after=Pt(70)
@@ -123,13 +128,13 @@ p=doc.add_paragraph(); p.alignment=WD_ALIGN_PARAGRAPH.CENTER; font(p.add_run('MA
 p=doc.add_paragraph(); p.style='Title'; p.alignment=WD_ALIGN_PARAGRAPH.CENTER; p.add_run('Sistema de Gestión\nLa 91 Supermercado')
 p=doc.add_paragraph(); p.style='Subtitle'; p.alignment=WD_ALIGN_PARAGRAPH.CENTER; p.add_run('Guía operativa para administración, supervisión y caja')
 doc.add_paragraph().paragraph_format.space_after=Pt(90)
-p=doc.add_paragraph(); p.alignment=WD_ALIGN_PARAGRAPH.CENTER; font(p.add_run('VERSIÓN PRELIMINAR 0.13'),11,VERDE,True)
+p=doc.add_paragraph(); p.alignment=WD_ALIGN_PARAGRAPH.CENTER; font(p.add_run('VERSIÓN PRELIMINAR 0.14'),11,VERDE,True)
 p=doc.add_paragraph(); p.alignment=WD_ALIGN_PARAGRAPH.CENTER; font(p.add_run('Agosto de 2026'),10,GRIS)
 note('Estado del documento.', 'Esta edición incorpora capturas reales obtenidas con los datos de la prueba funcional. Se actualizará cuando cambien pantallas o circuitos.', 'EAF4F6')
 
 page(); heading('Control del documento')
 table(['Campo','Detalle'],[
- ('Documento','Manual de usuario del Sistema de Gestión La 91 Supermercado'),('Versión','0.13 – preliminar ilustrada'),('Fecha','Agosto de 2026'),('Destinatarios','Administrador, supervisor, cajero y personal autorizado'),('Objetivo','Explicar la operación habitual y los controles necesarios'),('Próxima revisión','Cuando cambien pantallas o circuitos operativos')],[1.65,4.85])
+ ('Documento','Manual de usuario del Sistema de Gestión La 91 Supermercado'),('Versión','0.14 – preliminar ilustrada'),('Fecha','Agosto de 2026'),('Destinatarios','Administrador, supervisor, cajero y personal autorizado'),('Objetivo','Explicar la operación habitual y los controles necesarios'),('Próxima revisión','Cuando cambien pantallas o circuitos operativos')],[1.65,4.85])
 heading('Cómo utilizar este manual',2)
 doc.add_paragraph('Cada capítulo describe el objetivo del módulo, el procedimiento habitual y los controles que deben respetarse. Los nombres de botones y opciones aparecen tal como se muestran en el sistema.')
 note('Regla general.', 'Nunca comparta su contraseña. No elimine ni corrija movimientos financieros por fuera del procedimiento autorizado. Ante una diferencia, registre lo ocurrido y comuníquelo al supervisor.')
@@ -276,6 +281,7 @@ doc.add_paragraph('El canal online utiliza el mismo catálogo, los mismos client
 heading('15.1 Publicar productos',2)
 steps(['Abra E-commerce y seleccione Productos.','Busque el artículo.','Utilice Publicar para mostrarlo en la tienda u Ocultar para retirarlo del canal online.','Revise precio, disponibilidad, stock de seguridad, cantidad máxima y modalidades de entrega habilitadas.'])
 note('Stock online.', 'La disponibilidad se obtiene de la existencia del local menos las unidades reservadas y el stock de seguridad. No se mantiene un inventario físico separado para Internet.')
+screenshot_placeholder('Tienda online')
 heading('15.2 Crear y administrar promociones',2)
 steps(['Abra E-commerce y seleccione Promociones.','Seleccione Nueva promoción o Editar.','Defina nombre, tipo, valor, monto mínimo y vigencia.','Elija el alcance: pedido completo, categoría o productos específicos.','Active Aplicar también en el supermercado solamente si el descuento debe utilizarse en Punto de venta.','Guarde y compruebe el canal y el estado mostrados en la lista.'])
 bullets(['Solo online: se aplica únicamente en la tienda.','Online + supermercado: también se calcula automáticamente en Punto de venta.','Desactivar conserva el historial e impide nuevas aplicaciones.','Programada aún no comenzó; Vencida finalizó; Inactiva fue deshabilitada manualmente.','Los cupones y el envío gratis pertenecen exclusivamente al canal online.'])
@@ -283,6 +289,7 @@ note('Orden de descuentos.', 'Primero se aplican las promociones por producto o 
 heading('15.3 Comprar desde la tienda',2)
 steps(['Abra Visitar la tienda.','Busque productos por nombre o navegue por categorías.','Seleccione Agregar y abra el carrito.','Revise precio original, precio promocional, ahorro y subtotal.','Seleccione Continuar.','Complete cliente, modalidad de entrega y medio de pago.','Si posee un cupón, escríbalo y seleccione Aplicar.','Revise el resumen y el importe del botón Confirmar pedido.','Confirme y conserve el código de seguimiento.'])
 note('Importe antes de confirmar.', 'El resumen debe incluir subtotal original, descuentos, envío y total a pagar. El botón Confirmar pedido debe mostrar exactamente el mismo total que se registrará.')
+screenshot_placeholder('Compra online')
 heading('15.4 Reserva y vencimiento',2)
 doc.add_paragraph('Al crear el pedido, las unidades quedan reservadas: todavía no disminuye el stock físico. Si el pago no se registra dentro del plazo configurado, el pedido pasa a Cancelado y la reserva se libera automáticamente.')
 bullets(['Un pedido cancelado no puede cobrarse: el cliente debe crear uno nuevo.','Cancelar antes de pagar no genera movimientos de Tesorería ni ventas.','El plazo de reserva se configura desde E-commerce > Configuración.'])
@@ -321,7 +328,7 @@ heading('Registro de incidencias de la prueba',2)
 table(['Fecha','Módulo','Situación observada','Prioridad','Resolución'],[('','','','',''),('','','','',''),('','','','',''),('','','','','')],[.8,1.05,2.75,.8,1.1])
 
 doc.core_properties.title='Manual de Usuario - Sistema de Gestión La 91 Supermercado'
-doc.core_properties.subject='Guía operativa ilustrada, versión 0.13'
+doc.core_properties.subject='Guía operativa ilustrada, versión 0.14'
 doc.core_properties.author='La 91 Supermercado'
 doc.core_properties.keywords='supermercado, manual, usuario, caja, inventario, tesorería'
 OUT.parent.mkdir(parents=True,exist_ok=True)
