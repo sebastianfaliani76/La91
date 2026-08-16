@@ -8,7 +8,7 @@ from docx.oxml.ns import qn
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-OUT = ROOT / 'documentacion' / 'Manual_de_Usuario_La_91_v0.17.docx'
+OUT = ROOT / 'documentacion' / 'Manual_de_Usuario_La_91_v0.18.docx'
 LOGO = ROOT / 'frontend' / 'public' / 'marca' / 'logo-horizontal-claro.png'
 CAPTURAS = ROOT / 'documentacion' / 'capturas_manual'
 CAPTURA = CAPTURAS / '01-acceso.png'
@@ -120,7 +120,7 @@ def screenshot_placeholder(modulo):
 
 # Encabezado y pie
 h=sec.header.paragraphs[0]; h.alignment=WD_ALIGN_PARAGRAPH.LEFT; font(h.add_run('LA 91 SUPERMERCADO  |  MANUAL DE USUARIO'),8.5,VERDE,True)
-f=sec.footer.paragraphs[0]; f.alignment=WD_ALIGN_PARAGRAPH.CENTER; font(f.add_run('Versión preliminar 0.17 · Agosto 2026 · Uso interno y capacitación'),8,GRIS)
+f=sec.footer.paragraphs[0]; f.alignment=WD_ALIGN_PARAGRAPH.CENTER; font(f.add_run('Versión preliminar 0.18 · Agosto 2026 · Uso interno y capacitación'),8,GRIS)
 
 # Portada editorial
 doc.add_paragraph().paragraph_format.space_after=Pt(70)
@@ -130,13 +130,13 @@ p=doc.add_paragraph(); p.alignment=WD_ALIGN_PARAGRAPH.CENTER; font(p.add_run('MA
 p=doc.add_paragraph(); p.style='Title'; p.alignment=WD_ALIGN_PARAGRAPH.CENTER; p.add_run('Sistema de Gestión\nLa 91 Supermercado')
 p=doc.add_paragraph(); p.style='Subtitle'; p.alignment=WD_ALIGN_PARAGRAPH.CENTER; p.add_run('Guía operativa para administración, supervisión y caja')
 doc.add_paragraph().paragraph_format.space_after=Pt(90)
-p=doc.add_paragraph(); p.alignment=WD_ALIGN_PARAGRAPH.CENTER; font(p.add_run('VERSIÓN PRELIMINAR 0.17'),11,VERDE,True)
+p=doc.add_paragraph(); p.alignment=WD_ALIGN_PARAGRAPH.CENTER; font(p.add_run('VERSIÓN PRELIMINAR 0.18'),11,VERDE,True)
 p=doc.add_paragraph(); p.alignment=WD_ALIGN_PARAGRAPH.CENTER; font(p.add_run('Agosto de 2026'),10,GRIS)
 note('Estado del documento.', 'Esta edición incorpora capturas reales obtenidas con los datos de la prueba funcional. Se actualizará cuando cambien pantallas o circuitos.', 'EAF4F6')
 
 page(); heading('Control del documento')
 table(['Campo','Detalle'],[
- ('Documento','Manual de usuario del Sistema de Gestión La 91 Supermercado'),('Versión','0.17 – preliminar ilustrada'),('Fecha','Agosto de 2026'),('Destinatarios','Administrador, supervisor, cajero y personal autorizado'),('Objetivo','Explicar la operación habitual y los controles necesarios'),('Próxima revisión','Cuando cambien pantallas o circuitos operativos')],[1.65,4.85])
+ ('Documento','Manual de usuario del Sistema de Gestión La 91 Supermercado'),('Versión','0.18 – preliminar ilustrada'),('Fecha','Agosto de 2026'),('Destinatarios','Administrador, supervisor, cajero y personal autorizado'),('Objetivo','Explicar la operación habitual y los controles necesarios'),('Próxima revisión','Cuando cambien pantallas o circuitos operativos')],[1.65,4.85])
 heading('Cómo utilizar este manual',2)
 doc.add_paragraph('Cada capítulo describe el objetivo del módulo, el procedimiento habitual y los controles que deben respetarse. Los nombres de botones y opciones aparecen tal como se muestran en el sistema.')
 note('Regla general.', 'Nunca comparta su contraseña. No elimine ni corrija movimientos financieros por fuera del procedimiento autorizado. Ante una diferencia, registre lo ocurrido y comuníquelo al supervisor.')
@@ -292,22 +292,41 @@ heading('15.3 Comprar desde la tienda',2)
 steps(['Abra Visitar la tienda.','Busque productos por nombre o navegue por categorías.','Seleccione Agregar y abra el carrito.','Revise precio original, precio promocional, ahorro y subtotal.','Seleccione Continuar.','Complete cliente, modalidad de entrega y medio de pago.','Si posee un cupón, escríbalo y seleccione Aplicar.','Revise el resumen y el importe del botón Confirmar pedido.','Confirme y conserve el código de seguimiento.'])
 note('Importe antes de confirmar.', 'El resumen debe incluir subtotal original, descuentos, envío y total a pagar. El botón Confirmar pedido debe mostrar exactamente el mismo total que se registrará.')
 screenshot_placeholder('Compra online')
-heading('15.4 Reserva y vencimiento',2)
+heading('15.4 Domicilio, mapa, distancia y cobertura',2)
+doc.add_paragraph('Para los envíos a domicilio, el cliente debe indicar la dirección y confirmar el punto exacto en el mapa. El sistema calcula la distancia siguiendo el recorrido por calles desde el comercio y utiliza ese resultado para validar la cobertura y calcular el envío.')
+steps(['Seleccione Envío a domicilio.','Complete calle, número y localidad.','Seleccione Buscar dirección en el mapa.','Compruebe que el marcador coincida con el domicilio real.','Si existe una diferencia, haga clic en el punto correcto del mapa para ajustar la ubicación.','Revise la latitud, la longitud y la distancia comprobada por calles.','Verifique el costo del envío antes de confirmar el pedido.'])
+bullets(['La distancia se calcula por el recorrido vial disponible, no en línea recta.','El costo se forma con el importe base más el valor por kilómetro, salvo que corresponda envío gratuito.','La dirección, las coordenadas y la distancia quedan asociadas al pedido para su preparación y despacho.','La geolocalización automática puede tener diferencias; el cliente debe comprobar siempre el marcador.'])
+note('Fuera de cobertura.', 'Si el domicilio supera la distancia máxima o no pertenece a una zona habilitada, el sistema muestra una advertencia e impide confirmar. En ese caso no debe crear el pedido ni reservar mercadería.')
+note('Pedido mínimo.', 'El mínimo se controla sobre el valor de los productos después de descuentos y antes de sumar el envío. El resumen muestra por separado subtotal original, descuentos, productos después de descuentos, envío y total a pagar.')
+heading('15.5 Reserva y vencimiento',2)
 doc.add_paragraph('Al crear el pedido, las unidades quedan reservadas: todavía no disminuye el stock físico. Si el pago no se registra dentro del plazo configurado, el pedido pasa a Cancelado y la reserva se libera automáticamente.')
 bullets(['Un pedido cancelado no puede cobrarse: el cliente debe crear uno nuevo.','Cancelar antes de pagar no genera movimientos de Tesorería ni ventas.','El plazo de reserva se configura desde E-commerce > Configuración.'])
-heading('15.5 Cobrar y preparar el pedido',2)
+heading('15.6 Cobrar y preparar el pedido',2)
 steps(['Abra E-commerce y seleccione Pedidos.','Abra Ver y controle productos, precios, descuentos, envío y total.','Seleccione Registrar pago.','Elija cuenta de Tesorería, medio, importe, comisión y referencia.','Verifique que el pago quede Aprobado y el pedido Confirmado.','Seleccione Preparar y luego Preparación completa.','Controle que el pedido quede Listo.'])
 note('Tesorería.', 'Registrar el pago genera un único ingreso en la cuenta seleccionada. Preparar o entregar no debe generar un segundo ingreso.')
 screenshot_placeholder('Preparación online')
-heading('15.6 Entregar y registrar la venta',2)
+heading('15.7 Preparación parcial y faltantes',2)
+doc.add_paragraph('Si al preparar el pedido falta mercadería o la cantidad disponible no coincide, registre solamente lo que realmente se entregará. No confirme cantidades que no se encuentren físicamente.')
+steps(['Abra el pedido confirmado y seleccione Preparar.','Reduzca la cantidad preparada del producto faltante o ingrese cero para retirarlo.','Agregue una observación que explique el faltante.','Confirme la preparación mediante el modal.','Revise el nuevo subtotal, los descuentos recalculados, el envío y el total final.','Compruebe el importe pendiente de reintegro cuando el pedido ya esté pagado.','Registre el reintegro desde la cuenta autorizada.','Controle la reserva de stock y el egreso en Tesorería.'])
+bullets(['Las unidades retiradas de la preparación deben liberar su reserva.','Las unidades preparadas continúan comprometidas hasta la entrega.','Las promociones generales deben recalcularse sobre el nuevo conjunto de productos.','El historial conserva las cantidades pedidas, preparadas y las observaciones.'])
+note('Resultado esperado.', 'El pedido debe conservar solamente las unidades preparadas, el cliente debe pagar el total recalculado y Tesorería debe reflejar exclusivamente el cobro neto o el reintegro correspondiente.')
+heading('15.8 Entregar y registrar la venta',2)
 steps(['Con el pedido Listo y el pago aprobado, seleccione Entregar y registrar venta.','Compruebe que el pedido quede Entregado.','Revise que el stock físico disminuya y la reserva vuelva a cero.','Abra Punto de venta y seleccione Historial para consultar la venta con canal e-commerce.'])
 bullets(['La venta online aparece como Venta online y no requiere una caja física.','Los reportes incorporan la venta, el costo y el margen.','El movimiento de Tesorería proviene del cobro, no de la entrega.'])
 note('Circuito validado.', 'La prueba funcional confirmó el pedido Entregado, la reserva en cero, el descuento correcto del stock físico y la venta online visible en Punto de venta > Historial. Tesorería conservó un solo ingreso: el registrado al cobrar el pedido.')
 screenshot_placeholder('Control pedido online')
-heading('15.7 Cancelar un pedido y realizar el reembolso total',2)
+heading('15.9 Pago en efectivo contra entrega',2)
+doc.add_paragraph('Cuando el cliente elige efectivo, el pedido puede prepararse y despacharse con el cobro pendiente, pero no debe completarse la entrega sin registrar el dinero recibido.')
+steps(['Abra el pedido y confirme que el medio indicado sea Efectivo.','Prepare el pedido y, si corresponde, seleccione Enviar.','Al recibir el dinero, seleccione Registrar pago.','Elija la cuenta de Tesorería autorizada para el cobro y confirme el importe.','Compruebe que el pago figure Aprobado.','Seleccione Entregar y registrar venta.','Revise el ingreso en Tesorería, la venta generada y la actualización del stock.'])
+note('Control obligatorio.', 'Entregar registra la venta, pero el ingreso de dinero se origina al registrar el pago. El sistema no debe permitir completar una entrega contra efectivo mientras el cobro continúe pendiente.')
+heading('15.10 Actualización de Inventario y Tesorería',2)
+doc.add_paragraph('Las pantallas operativas se actualizan automáticamente cuando otra sesión modifica datos relevantes. Esto permite que administración, supervisión y depósito consulten valores recientes sin cambiar de pestaña ni recargar manualmente.')
+bullets(['Al confirmar el pedido aumenta el stock reservado y disminuye el disponible.','Al cancelar o retirar unidades de la preparación se libera la reserva correspondiente.','Al entregar disminuye la existencia física y la reserva vuelve a cero.','Al registrar un cobro o reintegro se actualizan la cuenta y el libro de Tesorería.','Si una pantalla permanece abierta, debe reflejar los cambios realizados desde otro usuario en un plazo breve.'])
+note('Control cruzado.', 'Después de cada operación sensible, compare el detalle del pedido con Inventario y Tesorería. No registre movimientos manuales para corregir diferencias sin identificar primero su causa.')
+heading('15.11 Cancelar un pedido y realizar el reembolso total',2)
 steps(['Abra E-commerce > Pedidos y seleccione Ver en el pedido.','Compruebe los productos, el total pagado y la cuenta utilizada para el cobro.','Seleccione Cancelar y confirme el motivo.','Registre el reembolso desde la cuenta de Tesorería correspondiente.','Compruebe que el pedido figure Cancelado y que ya no permita registrar nuevos pagos.','Revise que la reserva de todos los productos haya sido liberada.','Controle en Tesorería el egreso por el importe reembolsado.'])
 note('Control del reintegro.', 'El detalle debe separar el total pagado, el total reembolsado y cualquier saldo pendiente de reintegro. Cancelar libera la reserva, pero el movimiento de dinero se registra al confirmar el reembolso desde la cuenta seleccionada.')
-heading('15.8 Devolución parcial por producto',2)
+heading('15.12 Devolución parcial por producto',2)
 doc.add_paragraph('La devolución parcial se utiliza cuando el cliente devuelve uno o varios artículos sin cancelar el resto del pedido. El pedido conserva su operación válida y solamente se revierten las unidades seleccionadas.')
 steps(['Abra el detalle del pedido pagado y seleccione Devolución parcial.','Marque el producto y la cantidad que devuelve el cliente.','Ingrese el motivo de la devolución.','Seleccione la cuenta de Tesorería desde la cual se realizará el reintegro.','Revise el importe calculado y confirme mediante el modal.','Compruebe que el pedido continúe activo y conserve los productos no devueltos.','Verifique que solamente las unidades devueltas regresen al stock.','Controle el egreso correspondiente en el libro de Tesorería y el historial dentro del pedido.'])
 bullets(['El reintegro se calcula utilizando el precio promocional efectivamente pagado, no el precio original sin descuento.','No se puede devolver una cantidad superior a la comprada ni volver a devolver unidades ya reintegradas.','Una devolución parcial no cancela automáticamente todo el pedido.','El detalle del pedido conserva producto, cantidad, motivo, cuenta e importe para auditoría.'])
@@ -323,7 +342,7 @@ table(['Control','Frecuencia','Responsable'],[
 
 heading('17. Problemas frecuentes')
 table(['Situación','Qué revisar'],[
- ('No aparece un módulo','Permisos del usuario y necesidad de volver a iniciar sesión.'),('No encuentra un producto','Código, nombre, estado activo, precio de venta y existencia.'),('No permite pagar en efectivo','El usuario debe tener una caja abierta.'),('No permite abrir una caja','Puede estar ocupada por otra sesión.'),('El saldo no coincide','Revise pagos parciales, devoluciones, cobranzas y filtros.'),('La venta quedó a crédito','Revise cliente seleccionado, pagos cargados y saldo pendiente.'),('Hay diferencia al cerrar','Vuelva a contar y revise devoluciones, gastos, sueldos, adelantos y movimientos manuales.'),('Pedido online cancelado','Venció el plazo de reserva. El stock fue liberado y debe generarse un pedido nuevo.'),('El total online no coincide','Revise promociones, cupón, modalidad de entrega y costo de zona antes de confirmar.'),('El sistema muestra un error','Copie el mensaje, anote la operación y comuníquelo sin repetirla varias veces.')],[2.2,4.3])
+ ('No aparece un módulo','Permisos del usuario y necesidad de volver a iniciar sesión.'),('No encuentra un producto','Código, nombre, estado activo, precio de venta y existencia.'),('No permite pagar en efectivo','El usuario debe tener una caja abierta.'),('No permite abrir una caja','Puede estar ocupada por otra sesión.'),('El saldo no coincide','Revise pagos parciales, devoluciones, cobranzas y filtros.'),('La venta quedó a crédito','Revise cliente seleccionado, pagos cargados y saldo pendiente.'),('Hay diferencia al cerrar','Vuelva a contar y revise devoluciones, gastos, sueldos, adelantos y movimientos manuales.'),('Pedido online cancelado','Venció el plazo de reserva. El stock fue liberado y debe generarse un pedido nuevo.'),('Domicilio fuera de cobertura','Revise el marcador, la localidad y la distancia por calles. No confirme ni cree una reserva manual.'),('El total online no coincide','Revise promociones, cupón, productos después de descuentos, modalidad y costo de envío.'),('La pantalla no actualiza','Espere unos segundos y verifique la conexión. No duplique la operación para forzar el cambio.'),('El sistema muestra un error','Copie el mensaje, anote la operación y comuníquelo sin repetirla varias veces.')],[2.2,4.3])
 
 page(); heading('18. Lista de verificación para puesta en marcha')
 for x in ['Usuarios y roles revisados','Cajas físicas identificadas','Productos, precios y códigos verificados','Stock inicial controlado','Proveedores cargados','Clientes con crédito autorizados','Empleados y modalidades revisados','Cuentas de Tesorería conciliadas','Prueba de compra realizada','Prueba de venta y devolución realizada','Prueba de cuenta corriente y cobranza realizada','Prueba de gasto, sueldo y adelanto realizada','Promociones online y locales verificadas','Pedido online, reserva, cobro, preparación y entrega comprobados','Venta online visible en historial y reportes','Cierre de caja comprobado','Reportes revisados','Procedimiento de respaldo y restauración probado']:
@@ -333,7 +352,7 @@ heading('Registro de incidencias de la prueba',2)
 table(['Fecha','Módulo','Situación observada','Prioridad','Resolución'],[('','','','',''),('','','','',''),('','','','',''),('','','','','')],[.8,1.05,2.75,.8,1.1])
 
 doc.core_properties.title='Manual de Usuario - Sistema de Gestión La 91 Supermercado'
-doc.core_properties.subject='Guía operativa ilustrada, versión 0.17'
+doc.core_properties.subject='Guía operativa ilustrada, versión 0.18'
 doc.core_properties.author='La 91 Supermercado'
 doc.core_properties.keywords='supermercado, manual, usuario, caja, inventario, tesorería'
 OUT.parent.mkdir(parents=True,exist_ok=True)
