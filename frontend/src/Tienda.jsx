@@ -30,6 +30,7 @@ function MapaEntrega({ origen, ubicacion, alCambiar }) {
   const contenedor = useRef(null);
   const mapa = useRef(null);
   const marcadorEntrega = useRef(null);
+  const lineaEntrega = useRef(null);
   const alCambiarRef = useRef(alCambiar);
   alCambiarRef.current = alCambiar;
 
@@ -66,18 +67,33 @@ function MapaEntrega({ origen, ubicacion, alCambiar }) {
     if (!mapa.current || !ubicacion) return;
     const punto = [ubicacion.latitud, ubicacion.longitud];
     if (!marcadorEntrega.current) {
-      marcadorEntrega.current = L.circleMarker(punto, {
-        radius: 8,
-        color: '#ffffff',
-        weight: 3,
-        fillColor: '#07575b',
-        fillOpacity: 1,
+      const icono = L.divIcon({
+        className: 'marcador-entrega',
+        html: '<span class="marcador-entrega__pin"></span>',
+        iconSize: [30, 38],
+        iconAnchor: [15, 38],
+        tooltipAnchor: [0, -34],
       })
+      marcadorEntrega.current = L.marker(punto, { icon: icono })
         .addTo(mapa.current)
         .bindTooltip('Dirección de entrega');
     } else marcadorEntrega.current.setLatLng(punto);
+    if (!lineaEntrega.current) {
+      lineaEntrega.current = L.polyline(
+        [
+          [origen.latitud, origen.longitud],
+          punto,
+        ],
+        { color: '#07575b', weight: 3, dashArray: '7 7', opacity: 0.8 },
+      ).addTo(mapa.current);
+    } else {
+      lineaEntrega.current.setLatLngs([
+        [origen.latitud, origen.longitud],
+        punto,
+      ]);
+    }
     mapa.current.setView(punto, 15);
-  }, [ubicacion]);
+  }, [origen, ubicacion]);
 
   return <div className="mapa-entrega" ref={contenedor} />;
 }
@@ -1083,7 +1099,7 @@ export function Tienda() {
               )}
             </fieldset>
             )}
-            <label>
+            <label className="tienda__campo-pago">
               Medio de pago
               <select name="medio_pago">
                 {portada.configuracion.permite_efectivo ? (
@@ -1116,7 +1132,7 @@ export function Tienda() {
                 Aplicar
               </button>
             </div>
-            <label>
+            <label className="tienda__campo-observaciones">
               Observaciones
               <textarea name="observaciones" />
             </label>
