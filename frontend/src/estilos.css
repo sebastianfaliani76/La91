@@ -209,6 +209,33 @@
   border: 1px solid #c4dfe6;
   border-radius: 6px;
 }
+.selector-ubicacion-entrega {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 8px;
+  margin-top: 4px;
+}
+.selector-ubicacion-entrega__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.selector-ubicacion-entrega__acciones .boton {
+  margin: 0;
+}
+.mapa-entrega {
+  width: 100%;
+  height: 290px;
+  border: 1px solid #a8c7cc;
+  border-radius: 7px;
+  overflow: hidden;
+  background: #eef5f6;
+  z-index: 0;
+}
+.ubicacion-entrega-confirmada {
+  margin: 0;
+  color: #07575b;
+}
 .cuenta-online {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -284,6 +311,9 @@
   .cuenta-online,
   .tienda__checkout fieldset {
     grid-template-columns: 1fr;
+  }
+  .mapa-entrega {
+    height: 240px;
   }
 }
 

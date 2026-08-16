@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { CampoClave } from './componentes/CampoClave.jsx';
 import { Modal } from './componentes/Modal.jsx';
 import { Paginacion } from './componentes/Paginacion.jsx';
@@ -9,6 +11,77 @@ const dinero = (n) =>
     currency: 'ARS',
   });
 const TOKEN = 'la91_cliente_token';
+const distanciaEntre = (origen, destino) => {
+  const radianes = (grados) => (grados * Math.PI) / 180;
+  const radioTierra = 6371;
+  const diferenciaLatitud = radianes(destino.latitud - origen.latitud);
+  const diferenciaLongitud = radianes(destino.longitud - origen.longitud);
+  const a =
+    Math.sin(diferenciaLatitud / 2) ** 2 +
+    Math.cos(radianes(origen.latitud)) *
+      Math.cos(radianes(destino.latitud)) *
+      Math.sin(diferenciaLongitud / 2) ** 2;
+  return Number(
+    (radioTierra * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))).toFixed(1),
+  );
+};
+
+function MapaEntrega({ origen, ubicacion, alCambiar }) {
+  const contenedor = useRef(null);
+  const mapa = useRef(null);
+  const marcadorEntrega = useRef(null);
+  const alCambiarRef = useRef(alCambiar);
+  alCambiarRef.current = alCambiar;
+
+  useEffect(() => {
+    if (!contenedor.current || mapa.current || !origen) return undefined;
+    const instancia = L.map(contenedor.current, {
+      center: [origen.latitud, origen.longitud],
+      zoom: 13,
+    });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap',
+      maxZoom: 19,
+    }).addTo(instancia);
+    L.circleMarker([origen.latitud, origen.longitud], {
+      radius: 7,
+      color: '#003b46',
+      fillColor: '#66a5ad',
+      fillOpacity: 1,
+    })
+      .addTo(instancia)
+      .bindTooltip('La 91 Supermercado');
+    instancia.on('click', ({ latlng }) =>
+      alCambiarRef.current({ latitud: latlng.lat, longitud: latlng.lng }),
+    );
+    mapa.current = instancia;
+    setTimeout(() => instancia.invalidateSize(), 0);
+    return () => {
+      instancia.remove();
+      mapa.current = null;
+    };
+  }, [origen]);
+
+  useEffect(() => {
+    if (!mapa.current || !ubicacion) return;
+    const punto = [ubicacion.latitud, ubicacion.longitud];
+    if (!marcadorEntrega.current) {
+      marcadorEntrega.current = L.circleMarker(punto, {
+        radius: 8,
+        color: '#ffffff',
+        weight: 3,
+        fillColor: '#07575b',
+        fillOpacity: 1,
+      })
+        .addTo(mapa.current)
+        .bindTooltip('Dirección de entrega');
+    } else marcadorEntrega.current.setLatLng(punto);
+    mapa.current.setView(punto, 15);
+  }, [ubicacion]);
+
+  return <div className="mapa-entrega" ref={contenedor} />;
+}
+
 async function api(ruta, opciones = {}) {
   const respuesta = await fetch(`/api/ecommerce${ruta}`, {
     ...opciones,
@@ -37,6 +110,10 @@ export function Tienda() {
   const [cotizacion, setCotizacion] = useState(null);
   const [modalidadCheckout, setModalidadCheckout] = useState('retiro');
   const [zonaCheckout, setZonaCheckout] = useState('');
+  const [localidadCheckout, setLocalidadCheckout] = useState('La Plata');
+  const [ubicacionCheckout, setUbicacionCheckout] = useState(null);
+  const [distanciaCheckout, setDistanciaCheckout] = useState(1);
+  const [buscandoDireccion, setBuscandoDireccion] = useState(false);
   const [cuponCheckout, setCuponCheckout] = useState('');
   const [cuponAplicado, setCuponAplicado] = useState('');
   const [cliente, setCliente] = useState(null);
@@ -108,6 +185,62 @@ export function Tienda() {
     () => carrito.reduce((s, i) => s + Number(i.precio) * i.cantidad, 0),
     [carrito],
   );
+  const origenEntrega = useMemo(() => {
+    const latitud = Number(portada?.configuracion?.latitud_origen);
+    const longitud = Number(portada?.configuracion?.longitud_origen);
+    return Number.isFinite(latitud) && Number.isFinite(longitud)
+      ? { latitud, longitud }
+      : null;
+  }, [portada]);
+  const aplicarUbicacion = (ubicacion) => {
+    setUbicacionCheckout(ubicacion);
+    if (origenEntrega) {
+      setDistanciaCheckout(distanciaEntre(origenEntrega, ubicacion));
+    }
+  };
+  useEffect(() => {
+    if (!portada || modalidadCheckout !== 'envio') return;
+    const distancia = Number(distanciaCheckout);
+    const zona = portada.zonas.find(
+      (item) =>
+        item.localidad === localidadCheckout &&
+        distancia >= Number(item.distancia_desde_km) &&
+        distancia <= Number(item.distancia_hasta_km),
+    );
+    setZonaCheckout(zona ? String(zona.id) : '');
+  }, [distanciaCheckout, localidadCheckout, modalidadCheckout, portada]);
+
+  async function buscarDireccionEntrega(formulario) {
+    const f = new FormData(formulario);
+    const calle = String(f.get('calle') || '').trim();
+    const numero = String(f.get('numero') || '').trim();
+    if (!calle || !numero) {
+      setMensaje('Ingresá la calle y el número antes de buscar en el mapa.');
+      return;
+    }
+    setBuscandoDireccion(true);
+    setMensaje('');
+    try {
+      const consulta = encodeURIComponent(
+        `${calle} ${numero}, ${localidadCheckout}, Buenos Aires, Argentina`,
+      );
+      const respuesta = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=jsonv2&countrycodes=ar&limit=1&q=${consulta}`,
+      );
+      if (!respuesta.ok) throw new Error('No se pudo consultar la dirección');
+      const [resultado] = await respuesta.json();
+      if (!resultado) throw new Error('No encontramos esa dirección en el mapa');
+      aplicarUbicacion({
+        latitud: Number(resultado.lat),
+        longitud: Number(resultado.lon),
+      });
+      setMensaje('Dirección encontrada. Confirmá el punto en el mapa.');
+    } catch (error) {
+      setMensaje(error.message);
+    } finally {
+      setBuscandoDireccion(false);
+    }
+  }
   useEffect(() => {
     if (!carrito.length) {
       setCotizacion(null);
@@ -179,6 +312,8 @@ export function Tienda() {
                 localidad: f.get('localidad'),
                 distancia_km: Number(f.get('distancia')),
                 zona_entrega_id: Number(f.get('zona')),
+                latitud: ubicacionCheckout?.latitud ?? null,
+                longitud: ubicacionCheckout?.longitud ?? null,
                 es_principal: false,
               }
             : null,
@@ -829,15 +964,19 @@ export function Tienda() {
               <legend>Dirección (solo para envío)</legend>
               <label>
                 Calle
-                <input name="calle" />
+                <input name="calle" required={modalidadCheckout === 'envio'} />
               </label>
               <label>
                 Número
-                <input name="numero" />
+                <input name="numero" required={modalidadCheckout === 'envio'} />
               </label>
               <label>
                 Localidad
-                <select name="localidad">
+                <select
+                  name="localidad"
+                  value={localidadCheckout}
+                  onChange={(e) => setLocalidadCheckout(e.target.value)}
+                >
                   {['La Plata', 'Berisso', 'Ensenada'].map((x) => (
                     <option key={x}>{x}</option>
                   ))}
@@ -847,14 +986,18 @@ export function Tienda() {
                 Zona
                 <select
                   name="zona"
-                  value={zonaCheckout || portada.zonas[0]?.id || ''}
+                  value={zonaCheckout}
                   onChange={(e) => setZonaCheckout(e.target.value)}
+                  required={modalidadCheckout === 'envio'}
                 >
-                  {portada.zonas.map((z) => (
+                  <option value="">Sin zona habilitada</option>
+                  {portada.zonas
+                    .filter((z) => z.localidad === localidadCheckout)
+                    .map((z) => (
                     <option key={z.id} value={z.id}>
                       {z.nombre} · {dinero(z.costo)}
                     </option>
-                  ))}
+                    ))}
                 </select>
               </label>
               <label>
@@ -865,9 +1008,74 @@ export function Tienda() {
                   min="0"
                   max={portada.configuracion.distancia_maxima_km}
                   step="0.1"
-                  defaultValue="1"
+                  value={distanciaCheckout}
+                  onChange={(e) => setDistanciaCheckout(e.target.value)}
+                  required={modalidadCheckout === 'envio'}
                 />
               </label>
+              {modalidadCheckout === 'envio' && origenEntrega && (
+                <div className="selector-ubicacion-entrega">
+                  <div className="selector-ubicacion-entrega__acciones">
+                    <button
+                      type="button"
+                      className="boton boton--secundario"
+                      disabled={buscandoDireccion}
+                      onClick={(e) =>
+                        buscarDireccionEntrega(e.currentTarget.form)
+                      }
+                    >
+                      {buscandoDireccion
+                        ? 'Buscando…'
+                        : 'Buscar dirección en el mapa'}
+                    </button>
+                    <button
+                      type="button"
+                      className="boton boton--secundario"
+                      onClick={() => {
+                        setMensaje('');
+                        if (!navigator.geolocation) {
+                          setMensaje(
+                            'Este navegador no permite obtener la ubicación.',
+                          );
+                          return;
+                        }
+                        navigator.geolocation.getCurrentPosition(
+                          ({ coords }) => {
+                            aplicarUbicacion({
+                              latitud: coords.latitude,
+                              longitud: coords.longitude,
+                            });
+                            setMensaje(
+                              'Ubicación obtenida. Ajustá el marcador si es necesario.',
+                            );
+                          },
+                          () =>
+                            setMensaje(
+                              'No fue posible obtener tu ubicación. Podés buscar la dirección o marcarla en el mapa.',
+                            ),
+                          { enableHighAccuracy: true, timeout: 10000 },
+                        );
+                      }}
+                    >
+                      Usar mi ubicación
+                    </button>
+                  </div>
+                  <p className="dato-secundario">
+                    Seleccioná el punto exacto de entrega. La distancia se
+                    calcula en línea recta desde el comercio.
+                  </p>
+                  <MapaEntrega
+                    origen={origenEntrega}
+                    ubicacion={ubicacionCheckout}
+                    alCambiar={aplicarUbicacion}
+                  />
+                  {ubicacionCheckout && (
+                    <p className="ubicacion-entrega-confirmada">
+                      Punto confirmado · {distanciaCheckout} km del comercio
+                    </p>
+                  )}
+                </div>
+              )}
             </fieldset>
             <label>
               Medio de pago
