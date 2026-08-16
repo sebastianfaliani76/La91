@@ -26,7 +26,7 @@ const distanciaEntre = (origen, destino) => {
   );
 };
 
-function MapaEntrega({ origen, ubicacion, alCambiar }) {
+export function MapaEntrega({ origen, ubicacion, alCambiar, mostrarRecorrido = true }) {
   const contenedor = useRef(null);
   const mapa = useRef(null);
   const marcadorEntrega = useRef(null);
@@ -78,7 +78,7 @@ function MapaEntrega({ origen, ubicacion, alCambiar }) {
         .addTo(mapa.current)
         .bindTooltip('Dirección de entrega');
     } else marcadorEntrega.current.setLatLng(punto);
-    if (!lineaEntrega.current) {
+    if (mostrarRecorrido && !lineaEntrega.current) {
       lineaEntrega.current = L.polyline(
         [
           [origen.latitud, origen.longitud],
@@ -86,14 +86,14 @@ function MapaEntrega({ origen, ubicacion, alCambiar }) {
         ],
         { color: '#07575b', weight: 3, dashArray: '7 7', opacity: 0.8 },
       ).addTo(mapa.current);
-    } else {
+    } else if (mostrarRecorrido) {
       lineaEntrega.current.setLatLngs([
         [origen.latitud, origen.longitud],
         punto,
       ]);
     }
     mapa.current.setView(punto, 15);
-  }, [origen, ubicacion]);
+  }, [mostrarRecorrido, origen, ubicacion]);
 
   return <div className="mapa-entrega" ref={contenedor} />;
 }
@@ -482,7 +482,10 @@ export function Tienda() {
         Number(portada.configuracion.envio_gratis_desde));
   const costoEnvioCheckout =
     modalidadCheckout === 'envio' && !envioGratis
-      ? Number(zonaSeleccionada?.costo || 0)
+      ? Number(zonaSeleccionada?.costo || 0) ||
+        Number(portada.configuracion.costo_envio_base || 0) +
+          Number(portada.configuracion.costo_por_km || 0) *
+            Number(distanciaCheckout || 0)
       : 0;
   const totalCheckout = totalProductosCheckout + costoEnvioCheckout;
   const productoBanner = productosPromocion[promocionActiva] || null;
@@ -1045,37 +1048,6 @@ export function Tienda() {
                       {buscandoDireccion
                         ? 'Buscando…'
                         : 'Buscar dirección en el mapa'}
-                    </button>
-                    <button
-                      type="button"
-                      className="boton boton--secundario"
-                      onClick={() => {
-                        setMensaje('');
-                        if (!navigator.geolocation) {
-                          setMensaje(
-                            'Este navegador no permite obtener la ubicación.',
-                          );
-                          return;
-                        }
-                        navigator.geolocation.getCurrentPosition(
-                          ({ coords }) => {
-                            aplicarUbicacion({
-                              latitud: coords.latitude,
-                              longitud: coords.longitude,
-                            });
-                            setMensaje(
-                              'Ubicación obtenida. Ajustá el marcador si es necesario.',
-                            );
-                          },
-                          () =>
-                            setMensaje(
-                              'No fue posible obtener tu ubicación. Podés buscar la dirección o marcarla en el mapa.',
-                            ),
-                          { enableHighAccuracy: true, timeout: 10000 },
-                        );
-                      }}
-                    >
-                      Usar mi ubicación
                     </button>
                   </div>
                   <p className="dato-secundario">

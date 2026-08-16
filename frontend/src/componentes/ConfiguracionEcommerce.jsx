@@ -1,3 +1,6 @@
+import { useEffect, useMemo, useState } from 'react';
+import { MapaEntrega } from '../Tienda.jsx';
+
 function CampoAjuste({ titulo, ayuda, children }) {
   return <div className="ajuste-ecommerce"><div className="ajuste-ecommerce__texto"><strong>{titulo}</strong>{ayuda&&<span>{ayuda}</span>}</div><div className="ajuste-ecommerce__control">{children}</div></div>;
 }
@@ -11,27 +14,52 @@ export function ConfiguracionEcommerce({ datos, alGuardar }) {
   const [latitud, setLatitud] = useState(c.latitud_origen ?? '');
   const [longitud, setLongitud] = useState(c.longitud_origen ?? '');
   const [estadoUbicacion, setEstadoUbicacion] = useState('');
+  const [direccion, setDireccion] = useState(c.direccion_origen ?? '');
+  const [buscando, setBuscando] = useState(false);
+  const [centroMapa] = useState(() => ({
+    latitud: Number(c.latitud_origen ?? -34.9214),
+    longitud: Number(c.longitud_origen ?? -57.9544),
+  }));
 
   useEffect(() => {
     setLatitud(c.latitud_origen ?? '');
     setLongitud(c.longitud_origen ?? '');
-  }, [c.latitud_origen, c.longitud_origen]);
+    setDireccion(c.direccion_origen ?? '');
+  }, [c.direccion_origen, c.latitud_origen, c.longitud_origen]);
 
-  function usarUbicacionActual() {
-    if (!navigator.geolocation) {
-      setEstadoUbicacion('Este navegador no permite obtener la ubicación.');
+  const puntoNegocio = useMemo(
+    () => latitud !== '' && longitud !== ''
+      ? { latitud: Number(latitud), longitud: Number(longitud) }
+      : null,
+    [latitud, longitud],
+  );
+
+  function seleccionarPunto(punto) {
+    setLatitud(Number(punto.latitud).toFixed(7));
+    setLongitud(Number(punto.longitud).toFixed(7));
+    setEstadoUbicacion('Punto del negocio seleccionado. Guardá los cambios para aplicarlo.');
+  }
+
+  async function buscarDireccion() {
+    if (!direccion.trim()) {
+      setEstadoUbicacion('Ingresá la dirección del negocio.');
       return;
     }
-    setEstadoUbicacion('Obteniendo ubicación…');
-    navigator.geolocation.getCurrentPosition(
-      ({ coords }) => {
-        setLatitud(coords.latitude.toFixed(7));
-        setLongitud(coords.longitude.toFixed(7));
-        setEstadoUbicacion('Ubicación actual cargada. Guardá los cambios para aplicarla.');
-      },
-      () => setEstadoUbicacion('No se pudo obtener la ubicación. Revisá el permiso del navegador.'),
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 },
-    );
+    setBuscando(true);
+    setEstadoUbicacion('Buscando dirección…');
+    try {
+      const consulta = encodeURIComponent(`${direccion}, Buenos Aires, Argentina`);
+      const respuesta = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&countrycodes=ar&limit=1&q=${consulta}`);
+      if (!respuesta.ok) throw new Error('No se pudo consultar la dirección.');
+      const [resultado] = await respuesta.json();
+      if (!resultado) throw new Error('No encontramos esa dirección en el mapa.');
+      seleccionarPunto({ latitud: Number(resultado.lat), longitud: Number(resultado.lon) });
+      setEstadoUbicacion('Dirección encontrada. Ajustá el punto en el mapa y guardá los cambios.');
+    } catch (error) {
+      setEstadoUbicacion(error.message);
+    } finally {
+      setBuscando(false);
+    }
   }
 
   return <form className="configuracion-ecommerce" onSubmit={alGuardar}>
@@ -45,8 +73,8 @@ export function ConfiguracionEcommerce({ datos, alGuardar }) {
     </div></section>
 
     <section className="grupo-ajustes"><header><h3>Entregas</h3><p>Origen, cobertura y costo del reparto.</p></header><div>
-      <CampoAjuste titulo="Dirección de origen" ayuda="Punto desde el que se calculan y despachan las entregas."><input name="direccion_origen" defaultValue={c.direccion_origen||''}/></CampoAjuste>
-      <CampoAjuste titulo="Coordenadas del negocio" ayuda="Ubicación precisa del punto de salida."><div className="coordenadas-ecommerce"><div className="controles-en-linea"><input aria-label="Latitud" name="latitud_origen" type="number" step="any" placeholder="Latitud" value={latitud} onChange={(e)=>setLatitud(e.target.value)}/><input aria-label="Longitud" name="longitud_origen" type="number" step="any" placeholder="Longitud" value={longitud} onChange={(e)=>setLongitud(e.target.value)}/></div><button className="boton boton--secundario boton--ubicacion" type="button" onClick={usarUbicacionActual}>Usar mi ubicación actual</button>{estadoUbicacion&&<span className="ayuda-ubicacion">{estadoUbicacion}</span>}</div></CampoAjuste>
+      <CampoAjuste titulo="Dirección de origen" ayuda="Punto desde el que se calculan y despachan las entregas."><div className="coordenadas-ecommerce"><div className="controles-en-linea"><input name="direccion_origen" value={direccion} onChange={(e)=>setDireccion(e.target.value)}/><button className="boton boton--secundario boton--ubicacion" type="button" disabled={buscando} onClick={buscarDireccion}>{buscando?'Buscando…':'Buscar en el mapa'}</button></div><MapaEntrega origen={centroMapa} ubicacion={puntoNegocio} alCambiar={seleccionarPunto} mostrarRecorrido={false}/><span className="dato-secundario">Buscá la dirección y hacé clic en el mapa para ajustar el punto exacto del supermercado.</span></div></CampoAjuste>
+      <CampoAjuste titulo="Coordenadas del negocio" ayuda="Se completan al buscar o seleccionar el punto en el mapa."><div className="coordenadas-ecommerce"><div className="controles-en-linea"><input aria-label="Latitud" name="latitud_origen" type="number" step="any" placeholder="Latitud" value={latitud} readOnly/><input aria-label="Longitud" name="longitud_origen" type="number" step="any" placeholder="Longitud" value={longitud} readOnly/></div>{estadoUbicacion&&<span className="ayuda-ubicacion">{estadoUbicacion}</span>}</div></CampoAjuste>
       <CampoAjuste titulo="Distancia máxima" ayuda="No se aceptarán entregas fuera de este límite."><div className="campo-con-unidad"><input name="distancia_maxima_km" type="number" min="0.1" step="0.1" defaultValue={c.distancia_maxima_km}/><span>km</span></div></CampoAjuste>
       <CampoAjuste titulo="Costo de envío" ayuda="Importe fijo más el adicional calculado por kilómetro."><div className="controles-en-linea"><label>Base<input name="costo_envio_base" type="number" min="0" step="0.01" defaultValue={c.costo_envio_base}/></label><label>Por km<input name="costo_por_km" type="number" min="0" step="0.01" defaultValue={c.costo_por_km}/></label></div></CampoAjuste>
       <CampoAjuste titulo="Opciones de entrega" ayuda="Elegí las modalidades que estarán disponibles en el checkout."><div className="lista-interruptores"><Interruptor nombre="permite_envio" etiqueta="Envío a domicilio" activo={c.permite_envio}/><Interruptor nombre="permite_retiro" etiqueta="Retiro en el local" activo={c.permite_retiro}/></div></CampoAjuste>
@@ -63,4 +91,3 @@ export function ConfiguracionEcommerce({ datos, alGuardar }) {
     <footer className="configuracion-ecommerce__acciones"><span>Los cambios se aplican inmediatamente.</span><button className="boton">Guardar cambios</button></footer>
   </form>;
 }
-import { useEffect, useState } from 'react';
