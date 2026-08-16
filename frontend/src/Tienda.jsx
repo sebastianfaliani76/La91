@@ -933,6 +933,7 @@ export function Tienda() {
       {modal === 'checkout' && (
         <Modal
           abierto
+          ancho="grande"
           titulo="Datos de entrega y pago"
           alCerrar={() => setModal(null)}
         >
@@ -960,8 +961,9 @@ export function Tienda() {
                 <option value="envio">Envío a domicilio</option>
               </select>
             </label>
+            {modalidadCheckout === 'envio' && (
             <fieldset>
-              <legend>Dirección (solo para envío)</legend>
+              <legend>Ubicación de entrega</legend>
               <label>
                 Calle
                 <input name="calle" required={modalidadCheckout === 'envio'} />
@@ -1013,7 +1015,7 @@ export function Tienda() {
                   required={modalidadCheckout === 'envio'}
                 />
               </label>
-              {modalidadCheckout === 'envio' && origenEntrega && (
+              {origenEntrega && (
                 <div className="selector-ubicacion-entrega">
                   <div className="selector-ubicacion-entrega__acciones">
                     <button
@@ -1077,6 +1079,7 @@ export function Tienda() {
                 </div>
               )}
             </fieldset>
+            )}
             <label>
               Medio de pago
               <select name="medio_pago">

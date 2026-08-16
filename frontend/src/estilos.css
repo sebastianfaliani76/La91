@@ -204,10 +204,48 @@
 .tienda__checkout fieldset {
   grid-column: 1/-1;
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 9px 12px;
+  padding: 12px;
   border: 1px solid #c4dfe6;
-  border-radius: 6px;
+  border-radius: 8px;
+  background: #f8fbfb;
+}
+.tienda__checkout {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px 12px;
+}
+.tienda__checkout > label,
+.tienda__checkout fieldset label {
+  min-width: 0;
+  margin-top: 0;
+}
+.tienda__checkout fieldset legend {
+  padding: 0 7px;
+  color: #07575b;
+  font-weight: 600;
+}
+.tienda__checkout > .campo-cupon-checkout {
+  grid-column: span 2;
+}
+.tienda__checkout > .fila-check {
+  grid-column: 1 / 3;
+  align-self: center;
+  margin: 0;
+}
+.tienda__checkout > .mensaje-error {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+.tienda__checkout > .tienda__resumen-checkout {
+  grid-column: 3 / -1;
+  margin: 0;
+}
+.tienda__checkout > .boton:last-child {
+  grid-column: 4;
+  justify-self: end;
+  min-width: 190px;
+  margin: 0;
 }
 .selector-ubicacion-entrega {
   grid-column: 1 / -1;
@@ -225,7 +263,7 @@
 }
 .mapa-entrega {
   width: 100%;
-  height: 290px;
+  height: 215px;
   border: 1px solid #a8c7cc;
   border-radius: 7px;
   overflow: hidden;
@@ -309,11 +347,22 @@
     height: 110px;
   }
   .cuenta-online,
+  .tienda__checkout,
   .tienda__checkout fieldset {
     grid-template-columns: 1fr;
   }
+  .tienda__checkout > .campo-cupon-checkout,
+  .tienda__checkout > .fila-check,
+  .tienda__checkout > .mensaje-error,
+  .tienda__checkout > .tienda__resumen-checkout,
+  .tienda__checkout > .boton:last-child {
+    grid-column: 1;
+  }
+  .tienda__checkout > .boton:last-child {
+    width: 100%;
+  }
   .mapa-entrega {
-    height: 240px;
+    height: 200px;
   }
 }
 
