@@ -11,6 +11,15 @@ const dinero = (n) =>
   });
 const fecha = (v) =>
   v ? new Date(v).toLocaleString('es-AR', { hour12: false }) : '—';
+const etiquetasEstadoPedido = {
+  pendiente_pago: 'Pendiente de pago',
+  confirmado: 'Confirmado',
+  en_preparacion: 'En preparación',
+  listo: 'Listo para despachar',
+  en_reparto: 'En reparto',
+  entregado: 'Entregado',
+  cancelado: 'Cancelado',
+};
 export function Ecommerce({ token, permisos }) {
   const [vista, setVista] = useState('pedidos'),
     [datos, setDatos] = useState([]),
@@ -461,6 +470,9 @@ export function Ecommerce({ token, permisos }) {
             {detalle.modalidad_entrega} · {detalle.medio_pago} · Pago:{' '}
             {detalle.estado_pago}
           </p>
+          <p className={`estado-pedido-detalle estado-pedido-detalle--${detalle.estado}`}>
+            Estado del pedido: {etiquetasEstadoPedido[detalle.estado] || detalle.estado}
+          </p>
           {detalle.modalidad_entrega === 'envio' && (
             <div className="datos-entrega-pedido">
               <span><strong>Dirección</strong>{detalle.direccion_cliente}</span>
@@ -852,9 +864,12 @@ export function Ecommerce({ token, permisos }) {
             )}
             {detalle.estado === 'listo' &&
               detalle.modalidad_entrega === 'envio' && (
-                <button onClick={() => avanzar('en_reparto')}>Enviar</button>
+                <button onClick={() => avanzar('en_reparto')}>
+                  Pasar a en reparto
+                </button>
               )}
-            {['listo', 'en_reparto'].includes(detalle.estado) &&
+            {((detalle.modalidad_entrega === 'retiro' && detalle.estado === 'listo') ||
+              (detalle.modalidad_entrega === 'envio' && detalle.estado === 'en_reparto')) &&
               detalle.estado_pago === 'aprobado' && (
                 <button
                   className="boton"
@@ -866,7 +881,9 @@ export function Ecommerce({ token, permisos }) {
                     cargar();
                   }}
                 >
-                  Entregar y registrar venta
+                  {detalle.modalidad_entrega === 'envio'
+                    ? 'Confirmar entrega y registrar venta'
+                    : 'Entregar retiro y registrar venta'}
                 </button>
               )}
             {!['entregado', 'cancelado'].includes(detalle.estado) && (

@@ -2492,6 +2492,30 @@ th {
   background: #f5fafb;
 }
 
+.estado-pedido-detalle {
+  display: inline-block;
+  margin: 2px 0 10px;
+  padding: 5px 9px;
+  border-left: 4px solid #66a5ad;
+  background: #eef6f7;
+  color: #003b46;
+}
+
+.estado-pedido-detalle--en_reparto {
+  border-left-color: #d28a00;
+  background: #fff8e8;
+}
+
+.estado-pedido-detalle--entregado {
+  border-left-color: #2e7d32;
+  background: #edf7ee;
+}
+
+.estado-pedido-detalle--cancelado {
+  border-left-color: #b3261e;
+  background: #fff0ef;
+}
+
 .datos-entrega-pedido span,
 .datos-entrega-pedido strong {
   display: block;
