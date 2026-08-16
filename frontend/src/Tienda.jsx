@@ -1164,19 +1164,24 @@ export function Tienda() {
               Observaciones
               <textarea name="observaciones" />
             </label>
-            <label className="fila-check">
-              <input name="sustituciones" type="checkbox" defaultChecked />{' '}
-              Acepto sustituciones similares
-            </label>
-            {mensaje && <p className={mensaje.startsWith('Recorrido calculado:') ? 'mensaje-exito' : 'mensaje-error'}>{mensaje}</p>}
-            {!cumplePedidoMinimo && (
-              <p className="mensaje-error mensaje-minimo-pedido" role="alert">
-                El pedido mínimo se calcula sobre los productos después de los
-                descuentos, sin incluir el envío. Llevás{' '}
-                <strong>{dinero(totalProductosCheckout)}</strong> y faltan{' '}
-                <strong>{dinero(faltantePedidoMinimo)}</strong>.
+            <div className="tienda__condiciones-checkout">
+              <label className="fila-check">
+                <input name="sustituciones" type="checkbox" defaultChecked />{' '}
+                Acepto sustituciones similares
+              </label>
+              <p className="informacion-minimo-pedido">
+                Pedido mínimo requerido:{' '}
+                <strong>{dinero(pedidoMinimoCheckout)}</strong>. Se calcula
+                después de los descuentos y sin incluir el envío.
               </p>
-            )}
+              {!cumplePedidoMinimo && (
+                <p className="mensaje-error mensaje-minimo-pedido" role="alert">
+                  Llevás <strong>{dinero(totalProductosCheckout)}</strong> y
+                  faltan <strong>{dinero(faltantePedidoMinimo)}</strong>.
+                </p>
+              )}
+            </div>
+            {mensaje && <p className={mensaje.startsWith('Recorrido calculado:') ? 'mensaje-exito' : 'mensaje-error'}>{mensaje}</p>}
             <div className="resumen-pedido-online tienda__resumen-checkout">
               <span>
                 Subtotal original{' '}
@@ -1195,9 +1200,6 @@ export function Tienda() {
               <span>
                 Productos después de descuentos{' '}
                 <strong>{dinero(totalProductosCheckout)}</strong>
-              </span>
-              <span>
-                Pedido mínimo <strong>{dinero(pedidoMinimoCheckout)}</strong>
               </span>
               <span>
                 Envío{' '}

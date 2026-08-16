@@ -249,17 +249,20 @@
   align-items: center;
   margin: 0;
 }
-.tienda__checkout > .fila-check {
+.tienda__condiciones-checkout {
   grid-column: 1 / 3;
+  display: grid;
+  gap: 5px;
+  justify-self: start;
+  align-self: center;
+}
+.tienda__condiciones-checkout .fila-check {
   display: inline-flex;
   align-items: center;
-  justify-self: start;
   gap: 8px;
-  align-self: center;
   margin: 0;
-  white-space: nowrap;
 }
-.tienda__checkout > .fila-check input[type='checkbox'] {
+.tienda__condiciones-checkout .fila-check input[type='checkbox'] {
   flex: 0 0 auto;
   width: 16px;
   height: 16px;
@@ -270,8 +273,9 @@
   grid-column: 1 / -1;
   margin: 0;
 }
-.tienda__checkout > .mensaje-minimo-pedido {
-  text-align: right;
+.informacion-minimo-pedido,
+.tienda__condiciones-checkout .mensaje-minimo-pedido {
+  margin: 0;
 }
 .tienda__checkout > .tienda__resumen-checkout {
   grid-column: 3 / -1;
@@ -437,7 +441,7 @@
     grid-column: 1;
   }
   .tienda__checkout > .campo-cupon-checkout,
-  .tienda__checkout > .fila-check,
+  .tienda__condiciones-checkout,
   .tienda__checkout > .mensaje-error,
   .tienda__checkout > .tienda__resumen-checkout,
   .tienda__checkout > .boton:last-child {
