@@ -36,11 +36,14 @@ export function Inventario({ token, permisos }) {
   const [paginaMovimientos, setPaginaMovimientos] = useState(1);
   const [conteoRapido, setConteoRapido] = useState(null);
   const buscadorRef = useRef(null);
+  const cargaStockId = useRef(0);
+  const cargaMovimientosId = useRef(0);
   const [limite, setLimite] = useState(25);
   const puedeAjustar = permisos.includes('stock.ajustar');
   const seleccionarContenido = (evento) => evento.currentTarget.select();
 
   const cargar = useCallback(async () => {
+    const solicitudId = ++cargaStockId.current;
     try {
       const parametros = new URLSearchParams({
         pagina: String(pagina),
@@ -56,24 +59,29 @@ export function Inventario({ token, permisos }) {
           solicitar('/api/catalogo/categorias', token),
           solicitar('/api/catalogo/referencias', token),
         ]);
+      if (solicitudId !== cargaStockId.current) return;
       setExistencias(respuesta.datos);
       setTotal(respuesta.total);
       setCategorias(respuestaCategorias.datos);
       setMarcas(respuestaReferencias.marcas);
     } catch (error) {
+      if (solicitudId !== cargaStockId.current) return;
       setMensaje(error.message);
     }
   }, [token, pagina, limite, buscar, soloBajoMinimo, categoriaId, marcaId]);
 
   const cargarMovimientos = useCallback(async () => {
+    const solicitudId = ++cargaMovimientosId.current;
     try {
       const respuesta = await solicitar(
         `/api/inventario/movimientos?pagina=${paginaMovimientos}&limite=${limite}`,
         token,
       );
+      if (solicitudId !== cargaMovimientosId.current) return;
       setMovimientos(respuesta.datos);
       setTotalMovimientos(respuesta.total);
     } catch (error) {
+      if (solicitudId !== cargaMovimientosId.current) return;
       setMensaje(error.message);
     }
   }, [token, paginaMovimientos, limite]);
@@ -84,6 +92,25 @@ export function Inventario({ token, permisos }) {
   useEffect(() => {
     if (vista === 'movimientos') cargarMovimientos();
   }, [vista, cargarMovimientos]);
+  useEffect(() => {
+    const actualizarVista = () => {
+      if (document.visibilityState !== 'visible') return;
+      if (vista === 'existencias') cargar();
+      else cargarMovimientos();
+    };
+    const alRecuperarFoco = () => actualizarVista();
+    const alCambiarVisibilidad = () => {
+      if (document.visibilityState === 'visible') actualizarVista();
+    };
+    const intervalo = window.setInterval(actualizarVista, 10000);
+    window.addEventListener('focus', alRecuperarFoco);
+    document.addEventListener('visibilitychange', alCambiarVisibilidad);
+    return () => {
+      window.clearInterval(intervalo);
+      window.removeEventListener('focus', alRecuperarFoco);
+      document.removeEventListener('visibilitychange', alCambiarVisibilidad);
+    };
+  }, [vista, cargar, cargarMovimientos]);
   useEffect(() => {
     const temporizador = setTimeout(() => {
       setPagina(1);
