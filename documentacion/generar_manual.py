@@ -8,7 +8,7 @@ from docx.oxml.ns import qn
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-OUT = ROOT / 'documentacion' / 'Manual_de_Usuario_La_91_v0.16.docx'
+OUT = ROOT / 'documentacion' / 'Manual_de_Usuario_La_91_v0.17.docx'
 LOGO = ROOT / 'frontend' / 'public' / 'marca' / 'logo-horizontal-claro.png'
 CAPTURAS = ROOT / 'documentacion' / 'capturas_manual'
 CAPTURA = CAPTURAS / '01-acceso.png'
@@ -116,16 +116,11 @@ def screenshot_placeholder(modulo):
             continue
         p=doc.add_paragraph(); p.alignment=WD_ALIGN_PARAGRAPH.CENTER; p.paragraph_format.space_before=Pt(7); p.paragraph_format.space_after=Pt(3); p.paragraph_format.keep_together=True; p.paragraph_format.keep_with_next=True
         pic=p.add_run().add_picture(str(ruta),width=Inches(6.35)); pic._inline.docPr.set('descr',descripcion)
-        if archivo == '18-preparacion-pedido-online.png':
-            blip_fill = pic._inline.xpath('.//pic:blipFill')[0]
-            src_rect = OxmlElement('a:srcRect')
-            src_rect.set('t', '43000')
-            blip_fill.insert(1, src_rect)
         p=doc.add_paragraph(descripcion); p.alignment=WD_ALIGN_PARAGRAPH.CENTER; p.paragraph_format.space_after=Pt(9); p.paragraph_format.keep_with_next=False; font(p.runs[0],8.5,GRIS,False,True)
 
 # Encabezado y pie
 h=sec.header.paragraphs[0]; h.alignment=WD_ALIGN_PARAGRAPH.LEFT; font(h.add_run('LA 91 SUPERMERCADO  |  MANUAL DE USUARIO'),8.5,VERDE,True)
-f=sec.footer.paragraphs[0]; f.alignment=WD_ALIGN_PARAGRAPH.CENTER; font(f.add_run('Versión preliminar 0.16 · Agosto 2026 · Uso interno y capacitación'),8,GRIS)
+f=sec.footer.paragraphs[0]; f.alignment=WD_ALIGN_PARAGRAPH.CENTER; font(f.add_run('Versión preliminar 0.17 · Agosto 2026 · Uso interno y capacitación'),8,GRIS)
 
 # Portada editorial
 doc.add_paragraph().paragraph_format.space_after=Pt(70)
@@ -135,13 +130,13 @@ p=doc.add_paragraph(); p.alignment=WD_ALIGN_PARAGRAPH.CENTER; font(p.add_run('MA
 p=doc.add_paragraph(); p.style='Title'; p.alignment=WD_ALIGN_PARAGRAPH.CENTER; p.add_run('Sistema de Gestión\nLa 91 Supermercado')
 p=doc.add_paragraph(); p.style='Subtitle'; p.alignment=WD_ALIGN_PARAGRAPH.CENTER; p.add_run('Guía operativa para administración, supervisión y caja')
 doc.add_paragraph().paragraph_format.space_after=Pt(90)
-p=doc.add_paragraph(); p.alignment=WD_ALIGN_PARAGRAPH.CENTER; font(p.add_run('VERSIÓN PRELIMINAR 0.16'),11,VERDE,True)
+p=doc.add_paragraph(); p.alignment=WD_ALIGN_PARAGRAPH.CENTER; font(p.add_run('VERSIÓN PRELIMINAR 0.17'),11,VERDE,True)
 p=doc.add_paragraph(); p.alignment=WD_ALIGN_PARAGRAPH.CENTER; font(p.add_run('Agosto de 2026'),10,GRIS)
 note('Estado del documento.', 'Esta edición incorpora capturas reales obtenidas con los datos de la prueba funcional. Se actualizará cuando cambien pantallas o circuitos.', 'EAF4F6')
 
 page(); heading('Control del documento')
 table(['Campo','Detalle'],[
- ('Documento','Manual de usuario del Sistema de Gestión La 91 Supermercado'),('Versión','0.16 – preliminar ilustrada'),('Fecha','Agosto de 2026'),('Destinatarios','Administrador, supervisor, cajero y personal autorizado'),('Objetivo','Explicar la operación habitual y los controles necesarios'),('Próxima revisión','Cuando cambien pantallas o circuitos operativos')],[1.65,4.85])
+ ('Documento','Manual de usuario del Sistema de Gestión La 91 Supermercado'),('Versión','0.17 – preliminar ilustrada'),('Fecha','Agosto de 2026'),('Destinatarios','Administrador, supervisor, cajero y personal autorizado'),('Objetivo','Explicar la operación habitual y los controles necesarios'),('Próxima revisión','Cuando cambien pantallas o circuitos operativos')],[1.65,4.85])
 heading('Cómo utilizar este manual',2)
 doc.add_paragraph('Cada capítulo describe el objetivo del módulo, el procedimiento habitual y los controles que deben respetarse. Los nombres de botones y opciones aparecen tal como se muestran en el sistema.')
 note('Regla general.', 'Nunca comparta su contraseña. No elimine ni corrija movimientos financieros por fuera del procedimiento autorizado. Ante una diferencia, registre lo ocurrido y comuníquelo al supervisor.')
@@ -338,7 +333,7 @@ heading('Registro de incidencias de la prueba',2)
 table(['Fecha','Módulo','Situación observada','Prioridad','Resolución'],[('','','','',''),('','','','',''),('','','','',''),('','','','','')],[.8,1.05,2.75,.8,1.1])
 
 doc.core_properties.title='Manual de Usuario - Sistema de Gestión La 91 Supermercado'
-doc.core_properties.subject='Guía operativa ilustrada, versión 0.16'
+doc.core_properties.subject='Guía operativa ilustrada, versión 0.17'
 doc.core_properties.author='La 91 Supermercado'
 doc.core_properties.keywords='supermercado, manual, usuario, caja, inventario, tesorería'
 OUT.parent.mkdir(parents=True,exist_ok=True)
