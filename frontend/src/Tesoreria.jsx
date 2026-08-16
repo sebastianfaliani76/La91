@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Modal } from './componentes/Modal.jsx';
 import { fechaParaInput, formatearFecha } from './utilidades/fechas.js';
 import { Paginacion } from './componentes/Paginacion.jsx';
+import { useActualizacionAutomatica } from './hooks/useActualizacionAutomatica.js';
 const moneda = (v) =>
     Number(v).toLocaleString('es-AR', { style: 'currency', currency: 'ARS' }),
   hoy = fechaParaInput;
@@ -62,6 +63,10 @@ export function Tesoreria({ token, permisos }) {
     const t = setTimeout(cargar, 250);
     return () => clearTimeout(t);
   }, [cargar]);
+  useActualizacionAutomatica(
+    cargar,
+    !modalCuenta && !modalMovimiento && !modalTransferencia && !procesando,
+  );
   async function enviar(ruta, datos, cierre) {
     setProcesando(true);
     try {

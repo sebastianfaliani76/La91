@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useActualizacionAutomatica } from './hooks/useActualizacionAutomatica.js';
 import { Modal } from './componentes/Modal.jsx';
 import { Paginacion } from './componentes/Paginacion.jsx';
 import {
@@ -224,6 +225,10 @@ export function Gastos({ token, permisos }) {
   useEffect(() => {
     cargar();
   }, [cargar]);
+  useActualizacionAutomatica(
+    cargar,
+    !modalGasto && !modalCategoria && !detalle && !pagar && !anular && !procesando,
+  );
   useEffect(() => {
     const espera = setTimeout(() => {
       setBuscar(texto.trim());

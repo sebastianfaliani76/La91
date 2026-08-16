@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useActualizacionAutomatica } from './hooks/useActualizacionAutomatica.js';
 import { Modal } from './componentes/Modal.jsx';
 import { Paginacion } from './componentes/Paginacion.jsx';
 import {
@@ -183,6 +184,10 @@ export function Proveedores({ token, permisos }) {
   useEffect(() => {
     cargar();
   }, [cargar]);
+  useActualizacionAutomatica(
+    cargar,
+    !modal && !cuenta && !factura && !pagar && !procesando && !comprobante,
+  );
   useEffect(() => {
     if (!pagar) return;
     setErrorPago('');

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Modal } from './componentes/Modal.jsx';
 import { Paginacion } from './componentes/Paginacion.jsx';
 import { formatearFecha } from './utilidades/fechas.js';
+import { useActualizacionAutomatica } from './hooks/useActualizacionAutomatica.js';
 
 const fechaHoy = () => {
   const ahora = new Date();
@@ -69,6 +70,10 @@ export function Compras({ token, permisos }) {
   useEffect(() => {
     cargar();
   }, [cargar]);
+  useActualizacionAutomatica(
+    cargar,
+    !modal && !ordenActual && !compraARecibir && !accionCompra && !recibiendo,
+  );
   useEffect(() => {
     const temporizador = setTimeout(() => {
       setPagina(1);

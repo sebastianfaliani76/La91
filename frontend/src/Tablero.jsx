@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { formatearFechaHora } from './utilidades/fechas.js';
+import { useActualizacionAutomatica } from './hooks/useActualizacionAutomatica.js';
 
 const moneda = (valor) =>
   Number(valor).toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
@@ -23,6 +24,7 @@ export function Tablero({ token, permisos, alNavegar }) {
   useEffect(() => {
     cargar();
   }, [cargar]);
+  useActualizacionAutomatica(cargar);
   if (!datos)
     return (
       <section className="modulo">

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { formatearFecha } from './utilidades/fechas.js';
+import { useActualizacionAutomatica } from './hooks/useActualizacionAutomatica.js';
 
 const moneda = (valor) =>
   Number(valor).toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
@@ -33,6 +34,7 @@ export function Reportes({ token }) {
   useEffect(() => {
     cargar();
   }, [cargar]);
+  useActualizacionAutomatica(cargar, true, 30000);
   return (
     <section className="modulo">
       <div className="modulo__encabezado">

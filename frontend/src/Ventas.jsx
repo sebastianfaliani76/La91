@@ -7,6 +7,7 @@ import {
 } from './utilidades/fechas.js';
 import { GestionCajas } from './componentes/GestionCajas.jsx';
 import { Paginacion } from './componentes/Paginacion.jsx';
+import { useActualizacionAutomatica } from './hooks/useActualizacionAutomatica.js';
 
 async function pedir(ruta, token, opciones = {}) {
   const respuesta = await fetch(ruta, {
@@ -124,6 +125,13 @@ export function Ventas({ token, permisos }) {
       setMensaje(error.message);
     }
   }, [token]);
+  const actualizarProductos = useCallback(async () => {
+    try {
+      setProductos((await pedir('/api/ventas/referencias', token)).datos);
+    } catch (error) {
+      setMensaje(error.message);
+    }
+  }, [token]);
   useEffect(() => {
     cargar();
   }, [cargar]);
@@ -171,6 +179,14 @@ export function Ventas({ token, permisos }) {
   useEffect(() => {
     if (vista === 'historial') cargarHistorial();
   }, [vista, cargarHistorial]);
+  useActualizacionAutomatica(
+    actualizarProductos,
+    vista === 'venta' && carrito.length === 0 && !procesando && !modalCobro,
+  );
+  useActualizacionAutomatica(
+    cargarHistorial,
+    vista === 'historial' && !ventaDetalle && !ventaAAnular && !ventaCambio,
+  );
   useEffect(() => {
     const temporizador = setTimeout(() => {
       setPaginaVentas(1);
@@ -644,6 +660,10 @@ export function Ventas({ token, permisos }) {
     const temporizador = setTimeout(cargarHistorialCajas, 200);
     return () => clearTimeout(temporizador);
   }, [modalHistorialCajas, cargarHistorialCajas]);
+  useActualizacionAutomatica(
+    cargarHistorialCajas,
+    modalHistorialCajas && !sesionARendir && !procesando,
+  );
 
   function abrirHistorialCajas() {
     setPaginaCajas(1);

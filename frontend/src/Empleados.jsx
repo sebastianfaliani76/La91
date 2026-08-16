@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useActualizacionAutomatica } from './hooks/useActualizacionAutomatica.js';
 import { Modal } from './componentes/Modal.jsx';
 import { fechaParaInput, formatearFecha, formatearFechaHora } from './utilidades/fechas.js';
 const moneda = (v) => Number(v).toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
@@ -64,6 +65,10 @@ export function Empleados({ token, permisos }) {
     const t = setTimeout(cargar, 250);
     return () => clearTimeout(t);
   }, [cargar]);
+  useActualizacionAutomatica(
+    cargar,
+    !modal && !editar && !detalle && !adelanto && !liquidar && !liquidacion && !pagar && !procesando,
+  );
   useEffect(() => {
     if (!adelanto && !pagar) return;
     setMensaje('');

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Modal } from './componentes/Modal.jsx';
 import { formatearFechaHora } from './utilidades/fechas.js';
 import { Paginacion } from './componentes/Paginacion.jsx';
+import { useActualizacionAutomatica } from './hooks/useActualizacionAutomatica.js';
 
 async function solicitar(ruta, token, opciones = {}) {
   const respuesta = await fetch(ruta, {
@@ -92,25 +93,10 @@ export function Inventario({ token, permisos }) {
   useEffect(() => {
     if (vista === 'movimientos') cargarMovimientos();
   }, [vista, cargarMovimientos]);
-  useEffect(() => {
-    const actualizarVista = () => {
-      if (document.visibilityState !== 'visible') return;
-      if (vista === 'existencias') cargar();
-      else cargarMovimientos();
-    };
-    const alRecuperarFoco = () => actualizarVista();
-    const alCambiarVisibilidad = () => {
-      if (document.visibilityState === 'visible') actualizarVista();
-    };
-    const intervalo = window.setInterval(actualizarVista, 10000);
-    window.addEventListener('focus', alRecuperarFoco);
-    document.addEventListener('visibilitychange', alCambiarVisibilidad);
-    return () => {
-      window.clearInterval(intervalo);
-      window.removeEventListener('focus', alRecuperarFoco);
-      document.removeEventListener('visibilitychange', alCambiarVisibilidad);
-    };
-  }, [vista, cargar, cargarMovimientos]);
+  useActualizacionAutomatica(() => {
+    if (vista === 'existencias') cargar();
+    else cargarMovimientos();
+  });
   useEffect(() => {
     const temporizador = setTimeout(() => {
       setPagina(1);

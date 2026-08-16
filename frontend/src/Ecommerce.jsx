@@ -3,6 +3,7 @@ import { Modal } from './componentes/Modal.jsx';
 import { ConfiguracionEcommerce } from './componentes/ConfiguracionEcommerce.jsx';
 import { PromocionesEcommerce } from './componentes/PromocionesEcommerce.jsx';
 import { Paginacion } from './componentes/Paginacion.jsx';
+import { useActualizacionAutomatica } from './hooks/useActualizacionAutomatica.js';
 
 const dinero = (n) =>
   Number(n || 0).toLocaleString('es-AR', {
@@ -66,6 +67,10 @@ export function Ecommerce({ token, permisos }) {
       setMensaje(e.message);
     }
   };
+  useActualizacionAutomatica(async () => {
+    await cargar();
+    if (detalle) setDetalle((await api(`/pedidos/${detalle.id}`)).dato);
+  }, vista === 'pedidos' && !confirmacion && !cobrando && !reembolsando && !devolviendo);
   // La recarga depende exclusivamente de los filtros visibles; `cargar` se redefine al renderizar.
   useEffect(() => {
     const t = setTimeout(cargar, 200);

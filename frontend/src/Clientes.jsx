@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useActualizacionAutomatica } from './hooks/useActualizacionAutomatica.js';
 import { Modal } from './componentes/Modal.jsx';
 import { Paginacion } from './componentes/Paginacion.jsx';
 import { formatearFecha, formatearFechaHora } from './utilidades/fechas.js';
@@ -193,6 +194,10 @@ export function Clientes({ token, permisos }) {
   useEffect(() => {
     cargar();
   }, [cargar]);
+  useActualizacionAutomatica(
+    cargar,
+    !modal && !cuenta && !cobrar && !procesando && !comprobante,
+  );
   useEffect(() => {
     const t = setTimeout(() => {
       setPagina(1);
