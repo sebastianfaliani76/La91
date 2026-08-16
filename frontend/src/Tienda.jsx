@@ -671,7 +671,7 @@ export function Tienda() {
           recibe pedidos.
         </p>
       )}
-      {mensaje && <p className="mensaje-error tienda__mensaje">{mensaje}</p>}
+      {mensaje && <p className={`${mensaje.startsWith('Recorrido calculado:') ? 'mensaje-exito' : 'mensaje-error'} tienda__mensaje`}>{mensaje}</p>}
       <div className="tienda__cuerpo">
         <aside>
           <h2>Categorías</h2>
@@ -1078,8 +1078,8 @@ export function Tienda() {
                     </button>
                   </div>
                   <p className="dato-secundario">
-                    Seleccioná el punto exacto de entrega. La distancia se
-                    calcula en línea recta desde el comercio.
+                    Seleccioná el punto exacto de entrega. La distancia y el
+                    costo se calculan siguiendo el recorrido por calles.
                   </p>
                   <MapaEntrega
                     origen={origenEntrega}
@@ -1142,7 +1142,7 @@ export function Tienda() {
               <input name="sustituciones" type="checkbox" defaultChecked />{' '}
               Acepto sustituciones similares
             </label>
-            {mensaje && <p className="mensaje-error">{mensaje}</p>}
+            {mensaje && <p className={mensaje.startsWith('Recorrido calculado:') ? 'mensaje-exito' : 'mensaje-error'}>{mensaje}</p>}
             <div className="resumen-pedido-online tienda__resumen-checkout">
               <span>
                 Subtotal original{' '}

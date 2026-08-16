@@ -1893,6 +1893,10 @@ textarea:focus {
   font-weight: 700;
 }
 
+.mensaje-exito {
+  color: #07575b;
+}
+
 @media (max-width: 540px) {
   .tarjeta {
     padding: 23px 18px;
