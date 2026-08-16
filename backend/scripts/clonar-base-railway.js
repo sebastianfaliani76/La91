@@ -153,13 +153,25 @@ await respaldarRailwayComoJson(respaldoRemoto);
 console.log(`Respaldo previo de Railway: ${respaldoRemoto}`);
 
 console.log(`Clonando la base local sobre Railway (${destino.nombre})...`);
-const sql = (await readFile(respaldoLocal, 'utf8')).replace(
-  /^\/\*M!999999\\- enable the sandbox mode \*\/\r?\n?/,
-  '',
-);
+const sql = (await readFile(respaldoLocal, 'utf8'))
+  .replace(/^\/\*M!999999\\- enable the sandbox mode \*\/\r?\n?/, '')
+  .replace(
+    /INSERT INTO `sesiones_caja` VALUES ([^\r\n]+);/,
+    (sentencia) =>
+      sentencia.replace(
+        /,(?:NULL|\d+),(?:NULL|\d+)\)(?=,|;)/g,
+        ',DEFAULT,DEFAULT)',
+      ),
+  );
 const conexion = await conectarRailway({ multipleStatements: true });
 try {
-  await conexion.query(sql);
+  try {
+    await conexion.query(sql);
+  } catch (error) {
+    // Evita imprimir el respaldo completo (que puede contener datos sensibles).
+    delete error.sql;
+    throw error;
+  }
   const [[tablas], [usuarios], [productos]] = await Promise.all([
     conexion.query(
       'SELECT COUNT(*) AS total FROM information_schema.tables WHERE table_schema = ?',
