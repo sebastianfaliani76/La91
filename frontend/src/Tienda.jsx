@@ -1100,9 +1100,12 @@ export function Tienda() {
                         : 'Buscar dirección en el mapa'}
                     </button>
                   </div>
-                  <p className="dato-secundario">
-                    Seleccioná el punto exacto de entrega. La distancia y el
-                    costo se calculan siguiendo el recorrido por calles.
+                  <p className="advertencia-verificar-mapa" role="note">
+                    Verificá que el marcador coincida con la dirección exacta.
+                    La ubicación automática puede tener diferencias; si es
+                    necesario, hacé clic en el punto correcto del mapa para
+                    ajustarla manualmente. La distancia y el costo se
+                    recalcularán por calles.
                   </p>
                   <MapaEntrega
                     origen={origenEntrega}

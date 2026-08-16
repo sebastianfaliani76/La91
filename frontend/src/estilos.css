@@ -309,6 +309,14 @@
 .selector-ubicacion-entrega__acciones .boton {
   margin: 0;
 }
+.advertencia-verificar-mapa {
+  margin: 0;
+  padding: 8px 10px;
+  border-left: 4px solid #b7791f;
+  color: #67420f;
+  background: #fff8e6;
+  line-height: 1.4;
+}
 .mapa-entrega {
   width: 100%;
   height: 215px;
