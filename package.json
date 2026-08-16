@@ -18,6 +18,7 @@
     "db:migrar": "npm run db:migrar --workspace backend",
     "db:respaldar": "npm run db:respaldar --workspace backend",
     "db:restaurar": "npm run db:restaurar --workspace backend --",
+    "db:clonar-railway": "npm run db:clonar-railway --workspace backend --",
     "admin:crear": "npm run admin:crear --workspace backend --",
     "simulacion:cargar": "npm run simulacion:cargar --workspace backend",
     "catalogo:importar": "npm run catalogo:importar --workspace backend --",

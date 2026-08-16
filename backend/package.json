@@ -12,6 +12,7 @@
     "db:migrar": "node scripts/migrar.js",
     "db:respaldar": "node scripts/respaldar-base-datos.js",
     "db:restaurar": "node scripts/restaurar-base-datos.js",
+    "db:clonar-railway": "node scripts/clonar-base-railway.js",
     "admin:crear": "node scripts/crear-administrador.js",
     "simulacion:cargar": "node scripts/cargar-simulacion.js",
     "catalogo:importar": "node scripts/importar-catalogo.js",
