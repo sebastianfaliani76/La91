@@ -1174,12 +1174,6 @@ export function Tienda() {
                 <strong>{dinero(pedidoMinimoCheckout)}</strong>. Se calcula
                 después de los descuentos y sin incluir el envío.
               </p>
-              {!cumplePedidoMinimo && (
-                <p className="mensaje-error mensaje-minimo-pedido" role="alert">
-                  Llevás <strong>{dinero(totalProductosCheckout)}</strong> y
-                  faltan <strong>{dinero(faltantePedidoMinimo)}</strong>.
-                </p>
-              )}
             </div>
             {mensaje && <p className={mensaje.startsWith('Recorrido calculado:') ? 'mensaje-exito' : 'mensaje-error'}>{mensaje}</p>}
             <div className="resumen-pedido-online tienda__resumen-checkout">
@@ -1213,15 +1207,23 @@ export function Tienda() {
                 Total a pagar <strong>{dinero(totalCheckout)}</strong>
               </span>
             </div>
-            <button
-              className="boton"
-              disabled={
-                !cumplePedidoMinimo ||
-                (modalidadCheckout === 'envio' && !rutaEntregaValida)
-              }
-            >
-              Confirmar pedido · {dinero(totalCheckout)}
-            </button>
+            <div className="tienda__acciones-confirmacion">
+              {!cumplePedidoMinimo && (
+                <p className="mensaje-error mensaje-minimo-pedido" role="alert">
+                  Llevás <strong>{dinero(totalProductosCheckout)}</strong> y
+                  faltan <strong>{dinero(faltantePedidoMinimo)}</strong>.
+                </p>
+              )}
+              <button
+                className="boton"
+                disabled={
+                  !cumplePedidoMinimo ||
+                  (modalidadCheckout === 'envio' && !rutaEntregaValida)
+                }
+              >
+                Confirmar pedido · {dinero(totalCheckout)}
+              </button>
+            </div>
           </form>
         </Modal>
       )}

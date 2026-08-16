@@ -273,17 +273,26 @@
   grid-column: 1 / -1;
   margin: 0;
 }
-.informacion-minimo-pedido,
-.tienda__condiciones-checkout .mensaje-minimo-pedido {
+.informacion-minimo-pedido {
   margin: 0;
 }
 .tienda__checkout > .tienda__resumen-checkout {
   grid-column: 3 / -1;
   margin: 0;
 }
-.tienda__checkout > .boton:last-child {
-  grid-column: 4;
-  justify-self: end;
+.tienda__acciones-confirmacion {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+}
+.tienda__acciones-confirmacion .mensaje-minimo-pedido {
+  margin: 0;
+  text-align: right;
+}
+.tienda__acciones-confirmacion .boton {
+  flex: 0 0 auto;
   min-width: 190px;
   margin: 0;
 }
@@ -444,10 +453,17 @@
   .tienda__condiciones-checkout,
   .tienda__checkout > .mensaje-error,
   .tienda__checkout > .tienda__resumen-checkout,
-  .tienda__checkout > .boton:last-child {
+  .tienda__acciones-confirmacion {
     grid-column: 1;
   }
-  .tienda__checkout > .boton:last-child {
+  .tienda__acciones-confirmacion {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .tienda__acciones-confirmacion .mensaje-minimo-pedido {
+    text-align: left;
+  }
+  .tienda__acciones-confirmacion .boton {
     width: 100%;
   }
   .mapa-entrega {
