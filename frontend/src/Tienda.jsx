@@ -355,7 +355,7 @@ export function Tienda() {
                 numero: f.get('numero'),
                 localidad: f.get('localidad'),
                 distancia_km: Number(f.get('distancia')),
-                zona_entrega_id: Number(f.get('zona')),
+                zona_entrega_id: zonaCheckout ? Number(zonaCheckout) : null,
                 latitud: ubicacionCheckout?.latitud ?? null,
                 longitud: ubicacionCheckout?.longitud ?? null,
                 es_principal: false,
@@ -1050,24 +1050,6 @@ export function Tienda() {
                   {['La Plata', 'Berisso', 'Ensenada'].map((x) => (
                     <option key={x}>{x}</option>
                   ))}
-                </select>
-              </label>
-              <label>
-                Zona
-                <select
-                  name="zona"
-                  value={zonaCheckout}
-                  onChange={(e) => setZonaCheckout(e.target.value)}
-                  required={modalidadCheckout === 'envio'}
-                >
-                  <option value="">Sin zona habilitada</option>
-                  {portada.zonas
-                    .filter((z) => z.localidad === localidadCheckout)
-                    .map((z) => (
-                    <option key={z.id} value={z.id}>
-                      {z.nombre} · {dinero(z.costo)}
-                    </option>
-                    ))}
                 </select>
               </label>
               <label>
