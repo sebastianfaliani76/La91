@@ -972,6 +972,12 @@
   justify-content: flex-end;
   gap: 8px;
 }
+.paginacion--completa > span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  line-height: 1;
+}
 .paginacion__acciones {
   display: inline-flex;
   align-items: center;
@@ -981,14 +987,25 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  min-height: 34px;
+  margin: 0;
   color: var(--color-gris-600);
   font-size: 0.9rem;
+  font-weight: 400;
+  line-height: 1;
+  white-space: nowrap;
 }
 .paginacion--completa select {
+  height: 34px;
   width: auto;
   min-width: 64px;
-  padding: 6px 26px 6px 8px;
+  margin: 0;
+  padding: 5px 26px 5px 8px;
   font-weight: 400;
+}
+.paginacion--completa button {
+  min-height: 34px;
+  margin: 0;
 }
 .paginacion--superior {
   margin: 0 0 12px;
