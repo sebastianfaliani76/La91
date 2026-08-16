@@ -11,22 +11,7 @@ const dinero = (n) =>
     currency: 'ARS',
   });
 const TOKEN = 'la91_cliente_token';
-const distanciaEntre = (origen, destino) => {
-  const radianes = (grados) => (grados * Math.PI) / 180;
-  const radioTierra = 6371;
-  const diferenciaLatitud = radianes(destino.latitud - origen.latitud);
-  const diferenciaLongitud = radianes(destino.longitud - origen.longitud);
-  const a =
-    Math.sin(diferenciaLatitud / 2) ** 2 +
-    Math.cos(radianes(origen.latitud)) *
-      Math.cos(radianes(destino.latitud)) *
-      Math.sin(diferenciaLongitud / 2) ** 2;
-  return Number(
-    (radioTierra * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))).toFixed(1),
-  );
-};
-
-export function MapaEntrega({ origen, ubicacion, alCambiar, mostrarRecorrido = true }) {
+export function MapaEntrega({ origen, ubicacion, alCambiar, mostrarRecorrido = true, recorrido = [] }) {
   const contenedor = useRef(null);
   const mapa = useRef(null);
   const marcadorEntrega = useRef(null);
@@ -80,22 +65,24 @@ export function MapaEntrega({ origen, ubicacion, alCambiar, mostrarRecorrido = t
         .addTo(mapa.current)
         .bindTooltip('Dirección de entrega');
     } else marcadorEntrega.current.setLatLng(punto);
-    if (mostrarRecorrido && !lineaEntrega.current) {
-      lineaEntrega.current = L.polyline(
-        [
+    const puntosRecorrido = recorrido.length
+      ? recorrido
+      : [
           [origen.latitud, origen.longitud],
           punto,
-        ],
-        { color: '#07575b', weight: 3, dashArray: '7 7', opacity: 0.8 },
+        ];
+    if (mostrarRecorrido && !lineaEntrega.current) {
+      lineaEntrega.current = L.polyline(
+        puntosRecorrido,
+        { color: '#07575b', weight: 4, opacity: 0.85 },
       ).addTo(mapa.current);
     } else if (mostrarRecorrido) {
-      lineaEntrega.current.setLatLngs([
-        [origen.latitud, origen.longitud],
-        punto,
-      ]);
+      lineaEntrega.current.setLatLngs(puntosRecorrido);
     }
-    mapa.current.setView(punto, 15);
-  }, [mostrarRecorrido, origen, ubicacion]);
+    if (mostrarRecorrido && recorrido.length) {
+      mapa.current.fitBounds(lineaEntrega.current.getBounds(), { padding: [24, 24] });
+    } else mapa.current.setView(punto, 15);
+  }, [mostrarRecorrido, origen, recorrido, ubicacion]);
 
   return <div className="mapa-entrega" ref={contenedor} />;
 }
@@ -132,6 +119,9 @@ export function Tienda() {
   const [ubicacionCheckout, setUbicacionCheckout] = useState(null);
   const [distanciaCheckout, setDistanciaCheckout] = useState(1);
   const [buscandoDireccion, setBuscandoDireccion] = useState(false);
+  const [calculandoRuta, setCalculandoRuta] = useState(false);
+  const [recorridoCheckout, setRecorridoCheckout] = useState([]);
+  const solicitudRuta = useRef(0);
   const [cuponCheckout, setCuponCheckout] = useState('');
   const [cuponAplicado, setCuponAplicado] = useState('');
   const [cliente, setCliente] = useState(null);
@@ -210,10 +200,36 @@ export function Tienda() {
       ? { latitud, longitud }
       : null;
   }, [portada]);
-  const aplicarUbicacion = (ubicacion) => {
+  const aplicarUbicacion = async (ubicacion) => {
     setUbicacionCheckout(ubicacion);
-    if (origenEntrega) {
-      setDistanciaCheckout(distanciaEntre(origenEntrega, ubicacion));
+    setRecorridoCheckout([]);
+    setDistanciaCheckout('');
+    if (!origenEntrega) return false;
+    const solicitud = ++solicitudRuta.current;
+    setCalculandoRuta(true);
+    setMensaje('Calculando recorrido por calles…');
+    try {
+      const coordenadas = `${origenEntrega.longitud},${origenEntrega.latitud};${ubicacion.longitud},${ubicacion.latitud}`;
+      const respuesta = await fetch(`https://router.project-osrm.org/route/v1/driving/${coordenadas}?overview=full&geometries=geojson&steps=false`);
+      if (!respuesta.ok) throw new Error('No se pudo consultar el recorrido.');
+      const resultado = await respuesta.json();
+      const ruta = resultado.code === 'Ok' ? resultado.routes?.[0] : null;
+      if (!ruta) throw new Error('No encontramos un recorrido por calles hasta ese punto.');
+      if (solicitud !== solicitudRuta.current) return false;
+      const distancia = Number((Number(ruta.distance) / 1000).toFixed(1));
+      setDistanciaCheckout(distancia);
+      setRecorridoCheckout(
+        ruta.geometry.coordinates.map(([longitud, latitud]) => [latitud, longitud]),
+      );
+      setMensaje(`Recorrido calculado: ${distancia.toLocaleString('es-AR')} km por calles.`);
+      return true;
+    } catch (error) {
+      if (solicitud !== solicitudRuta.current) return false;
+      setDistanciaCheckout('');
+      setMensaje(`${error.message} Elegí otro punto o volvé a intentarlo.`);
+      return false;
+    } finally {
+      if (solicitud === solicitudRuta.current) setCalculandoRuta(false);
     }
   };
   useEffect(() => {
@@ -248,11 +264,10 @@ export function Tienda() {
       if (!respuesta.ok) throw new Error('No se pudo consultar la dirección');
       const [resultado] = await respuesta.json();
       if (!resultado) throw new Error('No encontramos esa dirección en el mapa');
-      aplicarUbicacion({
+      await aplicarUbicacion({
         latitud: Number(resultado.lat),
         longitud: Number(resultado.lon),
       });
-      setMensaje('Dirección encontrada. Confirmá el punto en el mapa.');
     } catch (error) {
       setMensaje(error.message);
     } finally {
@@ -312,6 +327,10 @@ export function Tienda() {
     setMensaje('');
     const f = new FormData(evento.currentTarget);
     const envio = f.get('modalidad_entrega') === 'envio';
+    if (envio && !rutaEntregaValida) {
+      setMensaje('El domicilio debe tener una ruta válida dentro de una zona de entrega habilitada.');
+      return;
+    }
     try {
       const datos = await api('/publico/pedidos', {
         method: 'POST',
@@ -477,6 +496,12 @@ export function Tienda() {
   const zonaSeleccionada = portada.zonas.find(
     (z) => String(z.id) === String(zonaCheckout || portada.zonas[0]?.id),
   );
+  const rutaEntregaValida =
+    !calculandoRuta &&
+    recorridoCheckout.length > 0 &&
+    Number(distanciaCheckout) <=
+      Number(portada.configuracion.distancia_maxima_km) &&
+    Boolean(zonaCheckout);
   const envioGratis =
     Boolean(cotizacion?.envio_gratis_promocion) ||
     (portada.configuracion.envio_gratis_desde &&
@@ -1032,7 +1057,7 @@ export function Tienda() {
                   max={portada.configuracion.distancia_maxima_km}
                   step="0.1"
                   value={distanciaCheckout}
-                  onChange={(e) => setDistanciaCheckout(e.target.value)}
+                  readOnly
                   required={modalidadCheckout === 'envio'}
                 />
               </label>
@@ -1060,13 +1085,16 @@ export function Tienda() {
                     origen={origenEntrega}
                     ubicacion={ubicacionCheckout}
                     alCambiar={aplicarUbicacion}
+                    recorrido={recorridoCheckout}
                   />
                   {ubicacionCheckout && (
                     <p className="ubicacion-entrega-confirmada">
                       Punto confirmado · Latitud{' '}
                       {Number(ubicacionCheckout.latitud).toFixed(6)} · Longitud{' '}
                       {Number(ubicacionCheckout.longitud).toFixed(6)} ·{' '}
-                      {distanciaCheckout} km del comercio
+                      {calculandoRuta
+                        ? 'calculando recorrido…'
+                        : `${distanciaCheckout} km por calles`}
                     </p>
                   )}
                 </div>
@@ -1142,7 +1170,7 @@ export function Tienda() {
                 Total a pagar <strong>{dinero(totalCheckout)}</strong>
               </span>
             </div>
-            <button className="boton">
+            <button className="boton" disabled={modalidadCheckout === 'envio' && !rutaEntregaValida}>
               Confirmar pedido · {dinero(totalCheckout)}
             </button>
           </form>

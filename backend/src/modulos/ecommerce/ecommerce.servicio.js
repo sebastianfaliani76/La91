@@ -8,6 +8,23 @@ const errorPublico = (mensaje, codigo = 'CONFLICTO') => Object.assign(new Error(
 const nulo = (valor) => valor === '' || valor === undefined ? null : valor;
 const redondear = (valor) => Math.round((Number(valor) + Number.EPSILON) * 100) / 100;
 
+async function calcularDistanciaPorCalles(origen, destino) {
+  if ([origen.latitud, origen.longitud, destino.latitud, destino.longitud].some((valor) => valor == null || !Number.isFinite(Number(valor)))) {
+    throw errorPublico('No se pudo validar la ubicación del comercio o del domicilio');
+  }
+  const coordenadas = `${origen.longitud},${origen.latitud};${destino.longitud},${destino.latitud}`;
+  try {
+    const respuesta = await fetch(`https://router.project-osrm.org/route/v1/driving/${coordenadas}?overview=false&steps=false`, { signal: AbortSignal.timeout(12000) });
+    if (!respuesta.ok) throw new Error('Servicio de rutas no disponible');
+    const resultado = await respuesta.json();
+    const ruta = resultado.code === 'Ok' ? resultado.routes?.[0] : null;
+    if (!ruta) throw new Error('Ruta inexistente');
+    return Number((Number(ruta.distance) / 1000).toFixed(1));
+  } catch {
+    throw errorPublico('No fue posible calcular el recorrido por calles. Volvé a intentarlo');
+  }
+}
+
 export async function obtenerConfiguracion(publica = false) {
   const [[configuracion]] = await baseDatos.query('SELECT * FROM configuracion_ecommerce WHERE id = 1');
   const [[zonas], [franjas]] = await Promise.all([
@@ -117,7 +134,7 @@ export async function crearPedido(datos) {
     const [[config]]=await conexion.query('SELECT * FROM configuracion_ecommerce WHERE id=1 FOR UPDATE'); if(!config.esta_activa)throw errorPublico('La tienda online no está recibiendo pedidos');
     if(datos.modalidad_entrega==='envio'&&!config.permite_envio)throw errorPublico('Los envíos no están habilitados'); if(datos.modalidad_entrega==='retiro'&&!config.permite_retiro)throw errorPublico('El retiro no está habilitado');
     if(datos.medio_pago==='efectivo'&&!config.permite_efectivo||datos.medio_pago==='transferencia'&&!config.permite_transferencia||datos.medio_pago==='mercado_pago'&&!config.permite_mercado_pago)throw errorPublico('El medio de pago no está habilitado');
-    let zona=null,costoEnvio=0;if(datos.modalidad_entrega==='envio'){if(!datos.direccion)throw errorPublico('Ingresá la dirección de entrega');if(datos.direccion.distancia_km==null)throw errorPublico('No se pudo validar la distancia de entrega');if(Number(datos.direccion.distancia_km)>Number(config.distancia_maxima_km))throw errorPublico(`La dirección supera el máximo de ${config.distancia_maxima_km} km`);[[zona]]=await conexion.query('SELECT * FROM zonas_entrega WHERE id=? AND esta_activa=TRUE AND localidad=? AND ?>=distancia_desde_km AND ?<=distancia_hasta_km',[datos.direccion.zona_entrega_id,datos.direccion.localidad,datos.direccion.distancia_km,datos.direccion.distancia_km]);if(!zona)throw errorPublico('La dirección no pertenece a una zona de entrega habilitada');costoEnvio=Number(zona.costo)||Number(config.costo_envio_base)+Number(config.costo_por_km)*Number(datos.direccion.distancia_km);}
+    let zona=null,costoEnvio=0;if(datos.modalidad_entrega==='envio'){if(!datos.direccion)throw errorPublico('Ingresá la dirección de entrega');const distanciaRuta=await calcularDistanciaPorCalles({latitud:config.latitud_origen,longitud:config.longitud_origen},datos.direccion);datos.direccion.distancia_km=distanciaRuta;if(distanciaRuta>Number(config.distancia_maxima_km))throw errorPublico(`La dirección supera el máximo de ${config.distancia_maxima_km} km por calles`);[[zona]]=await conexion.query('SELECT * FROM zonas_entrega WHERE esta_activa=TRUE AND localidad=? AND ?>=distancia_desde_km AND ?<=distancia_hasta_km ORDER BY distancia_hasta_km LIMIT 1',[datos.direccion.localidad,distanciaRuta,distanciaRuta]);if(!zona)throw errorPublico('La dirección no pertenece a una zona de entrega habilitada');datos.direccion.zona_entrega_id=zona.id;costoEnvio=Number(zona.costo)||Number(config.costo_envio_base)+Number(config.costo_por_km)*distanciaRuta;}
     const clienteId=obtenerClienteToken(datos.cliente_token); const promociones=await promocionesVigentes(conexion,datos.cupon_codigo); const detalles=[];let subtotal=0,descuento=0;
     for(const item of datos.items){const [[p]]=await conexion.query(`SELECT p.id,p.nombre,p.categoria_id,p.precio_costo,p.es_pesable,COALESCE(pe.nombre_online,p.nombre) nombre_online,COALESCE(pe.precio_online,p.precio_venta) precio,pe.stock_seguridad,pe.cantidad_maxima_pedido,pe.permite_sustitucion,pe.permite_retiro,pe.permite_envio,e.ubicacion_id,e.cantidad,e.cantidad_reservada FROM productos p JOIN productos_ecommerce pe ON pe.producto_id=p.id AND pe.esta_publicado=TRUE JOIN existencias e ON e.producto_id=p.id JOIN ubicaciones_stock u ON u.id=e.ubicacion_id AND u.codigo='LOCAL_PRINCIPAL' WHERE p.id=? AND p.esta_activo=TRUE FOR UPDATE`,[item.producto_id]);if(!p)throw errorPublico('Uno de los productos ya no está disponible');if(datos.modalidad_entrega==='envio'&&!p.permite_envio||datos.modalidad_entrega==='retiro'&&!p.permite_retiro)throw errorPublico(`${p.nombre_online} no admite esta modalidad`);if(p.cantidad_maxima_pedido&&item.cantidad>Number(p.cantidad_maxima_pedido))throw errorPublico(`${p.nombre_online} supera el máximo permitido`);const disponible=Number(p.cantidad)-Number(p.cantidad_reservada)-Number(p.stock_seguridad);if(item.cantidad>disponible+0.0001)throw errorPublico(`No hay stock suficiente de ${p.nombre_online}`);let precio=Number(p.precio),desc=0;for(const promo of promociones.filter(x=>x.ambito==='productos'&&(x.productos.has(Number(p.id))||x.categorias.has(Number(p.categoria_id))))){const candidato=promo.tipo==='precio_fijo'?Math.max(0,precio-Number(promo.precio_fijo)):precio*Number(promo.porcentaje||0)/100;if(candidato>desc)desc=candidato;if(!promo.es_acumulable)break;}const bruto=precio*item.cantidad;const descLinea=Math.min(bruto,desc*item.cantidad);subtotal+=bruto;descuento+=descLinea;detalles.push({...p,cantidad:item.cantidad,precio,descuento:descLinea,subtotal:bruto-descLinea});}
     const descuentoAntesPedido=descuento;
