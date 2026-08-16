@@ -2218,6 +2218,38 @@ textarea:focus {
   border-radius: 9px;
   background: var(--color-blanco);
 }
+
+.filtros-movimientos-stock {
+  display: grid;
+  grid-template-columns: minmax(260px, 2fr) repeat(4, minmax(130px, 1fr)) auto;
+  align-items: end;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.filtros-movimientos-stock label {
+  min-width: 0;
+}
+
+.filtros-movimientos-stock input,
+.filtros-movimientos-stock select {
+  width: 100%;
+}
+
+.filtros-movimientos-stock .boton {
+  min-height: 36px;
+  margin: 0;
+}
+
+@media (max-width: 1050px) {
+  .filtros-movimientos-stock {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .filtro-busqueda-movimientos {
+    grid-column: 1 / -1;
+  }
+}
 .barra-filtros input {
   flex: 1;
 }

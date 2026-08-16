@@ -50,26 +50,59 @@ export async function listarStock(consulta) {
 }
 
 export async function listarMovimientos(consulta) {
+  const condiciones = [];
+  const parametros = [];
+  if (consulta.buscar) {
+    const patron = `%${consulta.buscar}%`;
+    condiciones.push(`(p.nombre LIKE ? OR pcb.codigo_barra LIKE ? OR ms.motivo LIKE ?
+      OR us.nombre_usuario LIKE ? OR ms.referencia_tipo LIKE ?
+      OR CAST(ms.referencia_id AS CHAR) LIKE ?)`);
+    parametros.push(patron, patron, patron, patron, patron, patron);
+  }
+  if (consulta.tipo) {
+    condiciones.push('ms.tipo = ?');
+    parametros.push(consulta.tipo);
+  }
+  if (consulta.sentido === 'entradas') condiciones.push('msd.variacion > 0');
+  if (consulta.sentido === 'salidas') condiciones.push('msd.variacion < 0');
+  if (consulta.fecha_desde) {
+    condiciones.push('ms.fecha_creacion >= ?');
+    parametros.push(consulta.fecha_desde);
+  }
+  if (consulta.fecha_hasta) {
+    condiciones.push('ms.fecha_creacion < DATE_ADD(?, INTERVAL 1 DAY)');
+    parametros.push(consulta.fecha_hasta);
+  }
+  const desde = `FROM movimientos_stock_detalles msd
+    JOIN movimientos_stock ms ON ms.id = msd.movimiento_stock_id
+    JOIN productos p ON p.id = msd.producto_id
+    JOIN usuarios us ON us.id = ms.usuario_id
+    JOIN ubicaciones_stock ub ON ub.id = ms.ubicacion_id
+    LEFT JOIN productos_codigos_barra pcb
+      ON pcb.producto_id = p.id AND pcb.es_principal = TRUE
+    ${condiciones.length ? `WHERE ${condiciones.join(' AND ')}` : ''}`;
   const desplazamiento = (consulta.pagina - 1) * consulta.limite;
-  const [[datos], [conteo]] = await Promise.all([
+  const [[datos], [conteo], [tipos]] = await Promise.all([
     baseDatos.query(
       `SELECT msd.id, ms.id AS movimiento_id, ms.fecha_creacion, ms.tipo, ms.motivo,
+       ms.referencia_tipo, ms.referencia_id,
        us.nombre_usuario, p.id AS producto_id, p.nombre AS producto,
        pcb.codigo_barra, msd.cantidad_anterior, msd.variacion,
        msd.cantidad_nueva, msd.costo_unitario, ub.nombre AS ubicacion
-       FROM movimientos_stock_detalles msd
-       JOIN movimientos_stock ms ON ms.id = msd.movimiento_stock_id
-       JOIN productos p ON p.id = msd.producto_id
-       JOIN usuarios us ON us.id = ms.usuario_id
-       JOIN ubicaciones_stock ub ON ub.id = ms.ubicacion_id
-       LEFT JOIN productos_codigos_barra pcb
-         ON pcb.producto_id = p.id AND pcb.es_principal = TRUE
+       ${desde}
        ORDER BY ms.fecha_creacion DESC, msd.id DESC LIMIT ? OFFSET ?`,
-      [consulta.limite, desplazamiento],
+      [...parametros, consulta.limite, desplazamiento],
     ),
-    baseDatos.query('SELECT COUNT(*) AS total FROM movimientos_stock_detalles'),
+    baseDatos.query(`SELECT COUNT(*) AS total ${desde}`, parametros),
+    baseDatos.query('SELECT DISTINCT tipo FROM movimientos_stock ORDER BY tipo'),
   ]);
-  return { datos, total: conteo[0].total, pagina: consulta.pagina, limite: consulta.limite };
+  return {
+    datos,
+    total: conteo[0].total,
+    tipos: tipos.map((fila) => fila.tipo),
+    pagina: consulta.pagina,
+    limite: consulta.limite,
+  };
 }
 
 export async function ajustarStock(datos, usuarioId) {

@@ -35,6 +35,13 @@ export function Inventario({ token, permisos }) {
   const [movimientos, setMovimientos] = useState([]);
   const [totalMovimientos, setTotalMovimientos] = useState(0);
   const [paginaMovimientos, setPaginaMovimientos] = useState(1);
+  const [textoMovimientos, setTextoMovimientos] = useState('');
+  const [buscarMovimientos, setBuscarMovimientos] = useState('');
+  const [tipoMovimiento, setTipoMovimiento] = useState('');
+  const [sentidoMovimiento, setSentidoMovimiento] = useState('todos');
+  const [fechaDesdeMovimientos, setFechaDesdeMovimientos] = useState('');
+  const [fechaHastaMovimientos, setFechaHastaMovimientos] = useState('');
+  const [tiposMovimientos, setTiposMovimientos] = useState([]);
   const [conteoRapido, setConteoRapido] = useState(null);
   const buscadorRef = useRef(null);
   const cargaStockId = useRef(0);
@@ -74,18 +81,37 @@ export function Inventario({ token, permisos }) {
   const cargarMovimientos = useCallback(async () => {
     const solicitudId = ++cargaMovimientosId.current;
     try {
+      const parametros = new URLSearchParams({
+        pagina: String(paginaMovimientos),
+        limite: String(limite),
+        sentido: sentidoMovimiento,
+      });
+      if (buscarMovimientos) parametros.set('buscar', buscarMovimientos);
+      if (tipoMovimiento) parametros.set('tipo', tipoMovimiento);
+      if (fechaDesdeMovimientos) parametros.set('fecha_desde', fechaDesdeMovimientos);
+      if (fechaHastaMovimientos) parametros.set('fecha_hasta', fechaHastaMovimientos);
       const respuesta = await solicitar(
-        `/api/inventario/movimientos?pagina=${paginaMovimientos}&limite=${limite}`,
+        `/api/inventario/movimientos?${parametros}`,
         token,
       );
       if (solicitudId !== cargaMovimientosId.current) return;
       setMovimientos(respuesta.datos);
       setTotalMovimientos(respuesta.total);
+      setTiposMovimientos(respuesta.tipos);
     } catch (error) {
       if (solicitudId !== cargaMovimientosId.current) return;
       setMensaje(error.message);
     }
-  }, [token, paginaMovimientos, limite]);
+  }, [
+    token,
+    paginaMovimientos,
+    limite,
+    buscarMovimientos,
+    tipoMovimiento,
+    sentidoMovimiento,
+    fechaDesdeMovimientos,
+    fechaHastaMovimientos,
+  ]);
 
   useEffect(() => {
     cargar();
@@ -104,6 +130,13 @@ export function Inventario({ token, permisos }) {
     }, 300);
     return () => clearTimeout(temporizador);
   }, [textoBusqueda]);
+  useEffect(() => {
+    const temporizador = setTimeout(() => {
+      setPaginaMovimientos(1);
+      setBuscarMovimientos(textoMovimientos.trim());
+    }, 300);
+    return () => clearTimeout(temporizador);
+  }, [textoMovimientos]);
   useEffect(() => {
     if (buscar.length >= 8 && /^\d+$/.test(buscar) && total === 0) {
       buscadorRef.current?.focus();
@@ -438,9 +471,91 @@ export function Inventario({ token, permisos }) {
         </>
       ) : (
         <>
+          <div className="barra-filtros filtros-movimientos-stock">
+            <label className="filtro-busqueda-movimientos">
+              Buscar
+              <input
+                value={textoMovimientos}
+                onChange={(e) => setTextoMovimientos(e.target.value)}
+                placeholder="Producto, código, motivo, usuario o referencia"
+              />
+            </label>
+            <label>
+              Tipo
+              <select
+                value={tipoMovimiento}
+                onChange={(e) => {
+                  setTipoMovimiento(e.target.value);
+                  setPaginaMovimientos(1);
+                }}
+              >
+                <option value="">Todos los tipos</option>
+                {tiposMovimientos.map((tipo) => (
+                  <option key={tipo} value={tipo}>
+                    {tipo.replaceAll('_', ' ')}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Movimiento
+              <select
+                value={sentidoMovimiento}
+                onChange={(e) => {
+                  setSentidoMovimiento(e.target.value);
+                  setPaginaMovimientos(1);
+                }}
+              >
+                <option value="todos">Entradas y salidas</option>
+                <option value="entradas">Solo entradas</option>
+                <option value="salidas">Solo salidas</option>
+              </select>
+            </label>
+            <label>
+              Desde
+              <input
+                type="date"
+                value={fechaDesdeMovimientos}
+                max={fechaHastaMovimientos || undefined}
+                onChange={(e) => {
+                  setFechaDesdeMovimientos(e.target.value);
+                  setPaginaMovimientos(1);
+                }}
+              />
+            </label>
+            <label>
+              Hasta
+              <input
+                type="date"
+                value={fechaHastaMovimientos}
+                min={fechaDesdeMovimientos || undefined}
+                onChange={(e) => {
+                  setFechaHastaMovimientos(e.target.value);
+                  setPaginaMovimientos(1);
+                }}
+              />
+            </label>
+            {(textoMovimientos || tipoMovimiento || sentidoMovimiento !== 'todos' || fechaDesdeMovimientos || fechaHastaMovimientos) && (
+              <button
+                type="button"
+                className="boton boton--secundario"
+                onClick={() => {
+                  setTextoMovimientos('');
+                  setBuscarMovimientos('');
+                  setTipoMovimiento('');
+                  setSentidoMovimiento('todos');
+                  setFechaDesdeMovimientos('');
+                  setFechaHastaMovimientos('');
+                  setPaginaMovimientos(1);
+                }}
+              >
+                Restablecer
+              </button>
+            )}
+          </div>
           <p className="filtro-activo">
             Mostrando {totalMovimientos.toLocaleString('es-AR')} movimientos
-            registrados.
+            para los filtros seleccionados.
           </p>
           <article className="panel">
             <div className="panel__encabezado">
@@ -469,11 +584,13 @@ export function Inventario({ token, permisos }) {
                     <tr>
                       <th>Fecha</th>
                       <th>Producto</th>
+                      <th>Tipo</th>
                       <th>Usuario</th>
                       <th>Anterior</th>
                       <th>Variación</th>
                       <th>Nueva</th>
                       <th>Motivo</th>
+                      <th>Referencia</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -481,6 +598,7 @@ export function Inventario({ token, permisos }) {
                       <tr key={movimiento.id}>
                         <td>{formatearFechaHora(movimiento.fecha_creacion)}</td>
                         <td>{movimiento.producto}</td>
+                        <td>{movimiento.tipo.replaceAll('_', ' ')}</td>
                         <td>{movimiento.nombre_usuario}</td>
                         <td>
                           {Number(movimiento.cantidad_anterior).toLocaleString(
@@ -503,6 +621,11 @@ export function Inventario({ token, permisos }) {
                           )}
                         </td>
                         <td>{movimiento.motivo}</td>
+                        <td>
+                          {movimiento.referencia_tipo
+                            ? `${movimiento.referencia_tipo.replaceAll('_', ' ')} #${movimiento.referencia_id}`
+                            : '—'}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -510,8 +633,9 @@ export function Inventario({ token, permisos }) {
               </div>
             ) : (
               <p className="vacio">
-                Todavía no hay movimientos. Se registrarán cuando realices el
-                primer ajuste o una operación de stock.
+                {buscarMovimientos || tipoMovimiento || sentidoMovimiento !== 'todos' || fechaDesdeMovimientos || fechaHastaMovimientos
+                  ? 'No hay movimientos para los filtros seleccionados.'
+                  : 'Todavía no hay movimientos. Se registrarán cuando realices el primer ajuste o una operación de stock.'}
               </p>
             )}
             <Paginacion

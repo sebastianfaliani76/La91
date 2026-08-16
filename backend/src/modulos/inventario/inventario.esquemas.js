@@ -29,6 +29,14 @@ export const esquemaAjusteStockMasivo = z.object({
 });
 
 export const esquemaConsultaMovimientos = z.object({
+  buscar: z.string().trim().max(180).optional(),
+  tipo: z.string().trim().max(60).optional(),
+  sentido: z.enum(['todos', 'entradas', 'salidas']).default('todos'),
+  fecha_desde: z.string().date().optional(),
+  fecha_hasta: z.string().date().optional(),
   pagina: z.coerce.number().int().positive().default(1),
   limite: z.coerce.number().int().min(1).max(100).default(25),
-});
+}).refine(
+  (consulta) => !consulta.fecha_desde || !consulta.fecha_hasta || consulta.fecha_desde <= consulta.fecha_hasta,
+  { message: 'El rango de fechas no es válido', path: ['fecha_hasta'] },
+);
