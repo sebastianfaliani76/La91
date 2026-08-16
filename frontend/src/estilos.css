@@ -153,6 +153,10 @@
   height: 100%;
   object-fit: contain;
 }
+.tienda__producto--sin-stock .tienda__foto img {
+  filter: grayscale(70%);
+  opacity: 0.48;
+}
 .tienda__foto span {
   font-size: 22px;
   font-weight: 700;
@@ -933,7 +937,7 @@
   color: var(--color-gris-500);
   background: transparent;
   filter: none;
-  font-size: 2.35rem;
+  font-size: 2.75rem;
   line-height: 1;
   cursor: pointer;
 }
@@ -1016,7 +1020,8 @@
   display: flex;
   align-items: center;
   gap: 1px;
-  margin-top: 7px;
+  min-height: 20px;
+  margin-top: 0;
 }
 .tienda__productos article .tienda__valoracion button {
   width: auto;

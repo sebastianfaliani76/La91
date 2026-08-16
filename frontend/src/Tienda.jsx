@@ -557,7 +557,14 @@ export function Tienda() {
               return (
                 <article
                   key={p.id}
-                  className={itemCarrito ? 'tienda__producto--agregado' : ''}
+                  className={[
+                    itemCarrito ? 'tienda__producto--agregado' : '',
+                    Number(p.disponible_online) <= 0
+                      ? 'tienda__producto--sin-stock'
+                      : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
                 >
                   <div className="tienda__foto">
                     {Number(p.descuento_porcentaje) > 0 && (
@@ -574,24 +581,6 @@ export function Tienda() {
                       <span>LA 91</span>
                     )}
                   </div>
-                  <small>
-                    {p.categoria}
-                    {p.marca ? ` · ${p.marca}` : ''}
-                  </small>
-                  <h3>{p.nombre}</h3>
-                  {Number(p.descuento_porcentaje) > 0 ? (
-                    <div className="tienda__precio-promocional">
-                      <del>{dinero(p.precio)}</del>
-                      <strong>
-                        {dinero(
-                          Number(p.precio) *
-                            (1 - Number(p.descuento_porcentaje) / 100),
-                        )}
-                      </strong>
-                    </div>
-                  ) : (
-                    <strong>{dinero(p.precio)}</strong>
-                  )}
                   <div
                     className="tienda__valoracion"
                     aria-label="Valoración del producto"
@@ -618,11 +607,20 @@ export function Tienda() {
                         : 'Sin valoraciones'}
                     </small>
                   </div>
-                  <p>
-                    {Number(p.disponible_online) > 0
-                      ? 'Disponible'
-                      : 'Sin stock'}
-                  </p>
+                  <h3>{p.nombre}</h3>
+                  {Number(p.descuento_porcentaje) > 0 ? (
+                    <div className="tienda__precio-promocional">
+                      <del>{dinero(p.precio)}</del>
+                      <strong>
+                        {dinero(
+                          Number(p.precio) *
+                            (1 - Number(p.descuento_porcentaje) / 100),
+                        )}
+                      </strong>
+                    </div>
+                  ) : (
+                    <strong>{dinero(p.precio)}</strong>
+                  )}
                   <div className="tienda__estado-carrito" aria-live="polite">
                     {itemCarrito && (
                       <span>
