@@ -3630,3 +3630,213 @@ body.modal-abierto {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* Adaptación móvil global: Gestión y Tienda */
+@media (max-width: 600px) {
+  html,
+  body,
+  #root,
+  .aplicacion-interna,
+  .tienda {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .barra-superior {
+    grid-template-columns: 112px minmax(70px, 1fr) 52px 42px;
+    min-height: 64px;
+    gap: 4px;
+    padding-right: 4px;
+  }
+  .barra-superior .identidad-rol {
+    gap: 2px;
+  }
+  .barra-superior .marca-encabezado img {
+    max-height: 64px;
+  }
+  .barra-superior .rol-autenticado {
+    flex-basis: 32px;
+  }
+  .barra-superior .rol-autenticado > span:last-child {
+    display: none;
+  }
+  .barra-superior .icono-rol {
+    width: 29px;
+    height: 29px;
+    flex-basis: 29px;
+    background-size: 129px 86px;
+    background-position-y: -24px;
+  }
+  .barra-superior .icono-rol--administrador {
+    background-position-x: -2px;
+  }
+  .barra-superior .icono-rol--cajero {
+    background-position-x: -33px;
+  }
+  .barra-superior .icono-rol--supervisor {
+    background-position-x: -66px;
+  }
+  .barra-superior .icono-rol--deposito {
+    background-position-x: -97px;
+  }
+  .barra-superior .titulo-gestion {
+    font-size: 1.35rem;
+    line-height: 1.05;
+  }
+  .acceso-tienda-banner {
+    width: 50px;
+    height: 38px;
+  }
+  .barra-superior .boton-cerrar-sesion {
+    padding: 3px;
+  }
+  .barra-superior .boton-cerrar-sesion .icono-accion-tienda {
+    width: 31px;
+    height: 31px;
+    background-size: 155px 103px;
+    background-position-x: -95px;
+    background-position-y: -31px;
+  }
+
+  .navegacion-principal,
+  .subnavegacion,
+  .selector-vista {
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: thin;
+  }
+  .navegacion-principal {
+    gap: 0;
+    padding: 0 8px;
+  }
+  .navegacion-principal button,
+  .subnavegacion button,
+  .selector-vista button {
+    flex: 0 0 auto;
+    min-height: 40px;
+    white-space: nowrap;
+  }
+
+  .contenido-interno {
+    width: calc(100% - 16px);
+    padding: 17px 0 30px;
+  }
+  .panel,
+  .formulario-en-linea,
+  .barra-filtros {
+    padding: 10px;
+  }
+  .panel__encabezado {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .acciones-encabezado,
+  .acciones-encabezado .boton,
+  .modulo__encabezado > .boton {
+    width: 100%;
+  }
+  .paginacion,
+  .ecommerce-paginacion {
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .tabla-contenedor {
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  .tabla-contenedor table {
+    min-width: 680px;
+  }
+  .tabla-contenedor th,
+  .tabla-contenedor td {
+    padding: 7px 8px;
+  }
+
+  .modal-fondo {
+    align-items: center;
+    padding: 6px;
+  }
+  .modal,
+  .modal--grande {
+    width: 100%;
+    max-height: calc(100dvh - 12px);
+    border-radius: 9px;
+  }
+  .modal__encabezado {
+    padding: 11px 12px;
+  }
+  .modal__contenido {
+    padding: 10px;
+  }
+  .modal__acciones,
+  .acciones-modal {
+    align-items: stretch;
+    flex-wrap: wrap;
+  }
+  .modal__acciones .boton,
+  .acciones-modal button {
+    flex: 1 1 125px;
+    min-height: 38px;
+  }
+  .formulario-modal input,
+  .formulario-modal select,
+  .formulario-modal textarea {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .filtros-movimientos-stock,
+  .tarjetas-tablero,
+  .tarjetas-resumen,
+  .tarjetas-reporte,
+  .datos-entrega-pedido {
+    grid-template-columns: 1fr;
+  }
+  .detalle-venta-cabecera,
+  .detalle-venta-pie {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .resumen-pedido-admin {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .tienda__hero-nav {
+    justify-content: center;
+  }
+  .tienda__hero-nav button,
+  .tienda__hero-nav a {
+    flex: 1 1 30%;
+    min-width: 96px;
+    max-width: 122px;
+  }
+  .tienda__cuerpo {
+    gap: 16px;
+    margin: 16px auto;
+    padding: 0 12px;
+  }
+  .tienda__busqueda {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .selector-ubicacion-entrega__acciones {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .advertencia-verificar-mapa {
+    width: 100%;
+  }
+}
+
+@media (max-width: 340px) {
+  .tienda__productos {
+    grid-template-columns: 1fr;
+  }
+}
