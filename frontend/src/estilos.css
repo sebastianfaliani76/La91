@@ -3744,10 +3744,20 @@ body.modal-abierto {
   }
 
   .tabla-contenedor {
+    display: block;
+    width: 100%;
     max-width: 100%;
-    overflow-x: auto;
+    overflow-x: scroll;
+    overflow-y: hidden;
     overscroll-behavior-inline: contain;
+    touch-action: pan-x pan-y;
     -webkit-overflow-scrolling: touch;
+  }
+  .panel,
+  .panel--productos,
+  .rejilla-catalogo > *,
+  .rejilla-reportes > * {
+    min-width: 0;
   }
   .tabla-contenedor table {
     min-width: 680px;
@@ -3838,5 +3848,88 @@ body.modal-abierto {
 @media (max-width: 340px) {
   .tienda__productos {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) and (orientation: landscape) {
+  html,
+  body,
+  #root,
+  .aplicacion-interna,
+  .tienda {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+  .barra-superior {
+    grid-template-columns: 180px minmax(120px, 1fr) 72px 48px;
+    min-height: 62px;
+    gap: 7px;
+    padding-right: 6px;
+  }
+  .barra-superior .marca-encabezado img {
+    max-height: 62px;
+  }
+  .barra-superior .rol-autenticado {
+    flex-basis: 42px;
+  }
+  .barra-superior .rol-autenticado > span:last-child,
+  .barra-superior .etiqueta-cerrar-sesion {
+    display: none;
+  }
+  .barra-superior .titulo-gestion {
+    font-size: 1.7rem;
+  }
+  .acceso-tienda-banner {
+    width: 68px;
+    height: 42px;
+  }
+  .navegacion-principal,
+  .subnavegacion,
+  .selector-vista {
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: thin;
+  }
+  .navegacion-principal {
+    padding-inline: 10px;
+  }
+  .navegacion-principal button,
+  .subnavegacion button,
+  .selector-vista button {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+  .contenido-interno {
+    width: calc(100% - 20px);
+    padding: 16px 0 28px;
+  }
+  .panel,
+  .panel--productos,
+  .rejilla-catalogo > *,
+  .rejilla-reportes > * {
+    min-width: 0;
+  }
+  .tabla-contenedor {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    touch-action: pan-x pan-y;
+    -webkit-overflow-scrolling: touch;
+  }
+  .tabla-contenedor table {
+    min-width: 680px;
+  }
+  .modal,
+  .modal--grande {
+    max-height: calc(100dvh - 12px);
+  }
+  .tienda__hero {
+    min-height: 150px;
+  }
+  .tienda__cuerpo {
+    margin-top: 16px;
   }
 }
